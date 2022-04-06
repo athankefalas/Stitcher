@@ -6,7 +6,7 @@ Stitcher is a declarative library that helps to manage dependencies in Swift pro
 
 | Version | Changes                           |
 |---------|-----------------------------------|
-|0.9      | Pre-release.                      |
+|0.9.1      | Pre-release.                      |
 
 ## 🧰 Features
 
