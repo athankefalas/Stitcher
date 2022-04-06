@@ -1,11 +1,9 @@
 import XCTest
-@testable import Stitcher
+import Stitcher
 
 final class StitcherTests: XCTestCase {
-    func testExample() throws {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct
-        // results.
-        XCTAssertEqual(Stitcher().text, "Hello, World!")
+    
+    func test_testsRun() throws {
+        XCTAssertTrue(true)
     }
 }
