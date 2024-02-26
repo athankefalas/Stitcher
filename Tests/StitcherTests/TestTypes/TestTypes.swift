@@ -77,3 +77,20 @@ struct Four: Number, Equatable {
     
     var value: Int = 4
 }
+
+struct Values<V: CustomStringConvertible & Hashable>: CustomStringConvertible {
+    
+    let values: [V]
+    
+    var description: String {
+        values.map(\.description).joined(separator: ", ")
+    }
+    
+    init(values: V...) {
+        self.values = values
+    }
+    
+    func printValues() {
+        print(self.description)
+    }
+}

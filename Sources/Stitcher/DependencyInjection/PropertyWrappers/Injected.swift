@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Combine
 
 /// A property wrapper that injects the desired dependency in it's wrapped value when it is first requested.
 ///
@@ -23,6 +24,7 @@ public struct Injected<Value> {
         private var _value: Value?
         private let provider: @Sendable () throws -> Value
         private let semaphore = DispatchSemaphore(value: 1)
+        private var subscription: AnyCancellable?
         
         var isLoaded: Bool {
             semaphore.wait()
@@ -65,6 +67,15 @@ public struct Injected<Value> {
             }
             
             _value = nil
+        }
+        
+        func autoreload(callback: @escaping () -> Void) {
+            subscription?.cancel()
+            subscription = DependencyGraph.graphChangedPublisher
+                .sink { [weak self] in
+                    self?.clear()
+                    callback()
+                }
         }
     }
     
@@ -135,6 +146,15 @@ public struct Injected<Value> {
     public func reloadDependency() throws {
         storage.clear()
         let _ = try storage.value
+    }
+    
+    /// Enables automatic releading of the wrapped dependency whenever the graph changes.
+    /// - Note: Automatic reloading of injected dependencies can lead to unexpected behaviour. If this function is enabled any
+    /// synchronization of running tasks executed by the dependency during the change must be manually managed.
+    public func autoreload() {
+        storage.autoreload {
+            let _ = wrappedValue
+        }
     }
 }
 

@@ -14,6 +14,7 @@ public enum DependencyEagerness: Hashable {
     case lazy
     
     /// The dependency will be created when the related dependency container is activated.
-    /// - Note: If the scope of the dependency is other than `.singleton` the dependency may be immediately deallocated.
+    /// - Note: Eager initialization should be used with zero parameter dependencies.
+    ///   If the scope of the dependency is other than `.singleton` the dependency may be immediately deallocated.
     case eager
 }

@@ -147,7 +147,7 @@ public enum DependencyGraph {
     @discardableResult
     static func instantiateDependency(
         from registration: RawDependencyRegistration,
-        parameters: DependencyParameters = .none
+        _ parameters: DependencyParameters = .none
     ) throws -> Any {
         
         let storageKey = InstanceStorageKey(
