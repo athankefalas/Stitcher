@@ -13,7 +13,7 @@ import Foundation
 /// Dependencies can be located by a name, by their type or by an associated value.
 /// Create a dependency registration in a `DependencyContainer` using the following API:
 ///
-/// ```swift
+/// ``` swift
 ///
 /// // Registers a dependency, located by it's name.
 ///
@@ -23,6 +23,8 @@ import Foundation
 /// .named("some_service")
 ///
 /// // Registers a dependency, located by it's type.
+///
+/// SomeService()
 ///
 /// Dependency {
 ///   SomeService()

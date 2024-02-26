@@ -58,6 +58,15 @@ public struct DependencyRegistrarBuilder {
         return Output([RawDependencyRegistration(expression.dependency)])
     }
     
+    @_disfavoredOverload
+    public static func buildExpression<T>(
+        _ expression: @escaping @Sendable @autoclosure () -> T
+    ) -> Output {
+        
+        let dependency = Dependency(dependecy: expression)
+        return Output([RawDependencyRegistration(dependency)])
+    }
+    
     
     public static func buildEither(
         first component: Output

@@ -26,8 +26,11 @@ import Observation
 /// For example:
 /// ``` swift
 ///  let someContainer = DependencyContainer {
+///
+///      SomeService()
+///
 ///      Dependency {
-///          SomeService()
+///          SomeOtherService()
 ///      }
 ///  }
 ///
@@ -95,7 +98,7 @@ public final class DependencyContainer: Identifiable {
     /// Initializes a dependency container with the given dependency registrations provider closure.
     /// - Parameter dependencies: A closure that when invalidated returns a set of dependency registrations.
     public init(
-        @DependencyRegistrarBuilder dependencies: @Sendable @escaping () -> DependenciesRegistrar
+        @DependencyRegistrarBuilder dependencies: @escaping () -> DependenciesRegistrar
     ) {
         self.dependenciesRegistrar = dependencies()
         self.dependenciesRegistrarProvider = { dependencies() }
@@ -104,7 +107,11 @@ public final class DependencyContainer: Identifiable {
         startObservingChanges()
     }
     
-    init(merging containers: [DependencyContainer]) {
+    /// Initializes a dependency container merging all the given containers.
+    /// - Parameter containers: A sequence of child dependency containers to merge.
+    public init<SomeSequence: Sequence>(
+        merging containers: SomeSequence
+    ) where SomeSequence.Element == DependencyContainer {
         let dependencies: () -> DependenciesRegistrar = {
             containers.reduce(DependenciesRegistrar()) { partialResult, container in
                 partialResult.union(container.dependenciesRegistrar)
@@ -128,7 +135,10 @@ public final class DependencyContainer: Identifiable {
     
     private func postInit() {
         invalidateDependenciesSubject
-            .debounce(for: 0.0, scheduler: DispatchQueue.global(qos: .background))
+            .debounce(
+                for: 0.001,
+                scheduler: DispatchQueue.global(qos: .background)
+            )
             .sink { [weak self] _ in
                 self?.invalidateDependenciesRegistrar()
             }
@@ -153,7 +163,9 @@ public final class DependencyContainer: Identifiable {
 #endif
     }
     
-    private func subscribeForChanges(in containers: [DependencyContainer]) {
+    private func subscribeForChanges<SomeSequence: Sequence>(
+        in containers: SomeSequence
+    ) where SomeSequence.Element == DependencyContainer {
         for container in containers {
             _ = invalidated(tracking: container.dependenciesRegistrarChangesPublisher)
         }
@@ -170,10 +182,14 @@ public final class DependencyContainer: Identifiable {
         return registrar.filter({ $0.locator == proposal })
     }
     
-    /// Modified this container so that it dependency registrations provider closure will be invalidated when the given publisher fires.
+    /// Modifies this container so that it dependency registrations provider closure will be invalidated when the given publisher fires.
     /// - Parameter publisher: A publisher that notifies this dependency container that it's dependency registrations have been invalidated.
     /// - Returns: This dependency container instance with an added invalidation observation.
-    public func invalidated<V>(tracking publisher: AnyPublisher<V, Never>) -> DependencyContainer {
+    public func invalidated<SomePublisher: Publisher>(
+        tracking publisher: SomePublisher
+    ) -> DependencyContainer
+    where SomePublisher.Failure == Never {
+        
         publisher
             .debounce(for: 0.0, scheduler: DispatchQueue.global(qos: .background))
             .sink { [weak self] _ in
@@ -224,6 +240,17 @@ public extension DependencyContainer {
     ///   - Note: Any invalidation observations of the given containers will be carried to the resulting dependency container.
     convenience init(merging first: DependencyContainer, _ second: DependencyContainer, _ others: DependencyContainer...) {
         self.init(merging: [first, second] + others)
+    }
+    
+    /// Modifies this container so that it dependency registrations provider closure will be invalidated when the given object changes.
+    /// - Parameter object: The observable object to track
+    /// - Returns: This dependency container instance with an added invalidation observation.
+    func invalidated<SomeObject: ObservableObject>(
+        tracking object: SomeObject
+    ) -> DependencyContainer {
+        return self.invalidated(
+            tracking: object.objectWillChange
+        )
     }
     
     /// An empty dependency container.

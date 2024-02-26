@@ -16,8 +16,11 @@ import Foundation
 /// ``` swift
 /// @Dependencies
 /// var container = DependencyContainer {
+///
+///     SomeService()
+///
 ///     Dependency {
-///        SomeService()
+///        SomeOtherService()
 ///     }
 /// }
 /// ```
