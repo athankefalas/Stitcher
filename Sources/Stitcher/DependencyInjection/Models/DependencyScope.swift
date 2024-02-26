@@ -20,7 +20,7 @@ public enum DependencyScope: Hashable {
     case singleton
     
     /// A shared instance of the dependency will be created, and used while there are references to it or the given publisher fires.
-    case tracking(AnyPublisher<Void, Never>)
+    case managed(AnyPublisher<Void, Never>)
     
     private var caseIdentifier: Int {
         switch self {
@@ -30,14 +30,14 @@ public enum DependencyScope: Hashable {
             return 2
         case .singleton:
             return 3
-        case .tracking:
+        case .managed:
             return 4
         }
     }
     
     var invalidationPublisher: AnyPublisher<Void, Never>? {
         switch self {
-        case .tracking(let publisher):
+        case .managed(let publisher):
             return publisher
         default:
             return nil
@@ -53,6 +53,18 @@ public enum DependencyScope: Hashable {
     /// - Returns: Based of the semantics of the type, a `shared` scope is returned for reference types and `instance` for value types.
     public static func automatic<T>(for type: T.Type) -> DependencyScope {
         return (type is AnyObject.Type) ? .shared : .instance
+    }
+    
+    @_disfavoredOverload
+    public static func tracking<P: Publisher>(
+        _ publisher: P
+    ) -> Self
+    where P.Failure == Never {
+        return .managed(
+            publisher
+                .map({_ in () })
+                .eraseToAnyPublisher()
+        )
     }
     
     public static func == (lhs: DependencyScope, rhs: DependencyScope) -> Bool {

@@ -6,7 +6,7 @@
 //
 
 import XCTest
-@testable import Stitcher
+import Stitcher
 
 final class TypeInjectionTests: XCTestCase {
     
@@ -87,6 +87,7 @@ final class TypeInjectionTests: XCTestCase {
         XCTAssert(dependencies.count == 4)
     }
     
+    @available(*, deprecated)
     func test_injectionByType_findsOptionalDependenciesByProtocolConformance() throws {
         let dependencies: [LetterClassImplementing]? = try DependencyGraph.injectDependency(
             byType: [LetterClassImplementing]?.self
@@ -95,6 +96,7 @@ final class TypeInjectionTests: XCTestCase {
         XCTAssert(dependencies?.count == 4)
     }
     
+    @available(*, deprecated)
     func test_injectionByType_findsOptionalDependenciesByInheritedSuperclass() throws {
         let dependencies: [Letter]? = try DependencyGraph.injectDependency(
             byType: [Letter]?.self

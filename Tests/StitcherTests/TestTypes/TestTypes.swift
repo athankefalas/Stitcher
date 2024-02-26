@@ -53,3 +53,27 @@ class Epsilon: Letter {
     
     override var value: Int { 5 }
 }
+
+protocol Number: TypePrinting {
+    var value: Int { get }
+}
+
+struct One: Number, Equatable {
+    
+    var value: Int = 1
+}
+
+struct Two: Number, Equatable {
+    
+    var value: Int = 2
+}
+
+struct Three: Number, Equatable {
+    
+    var value: Int = 3
+}
+
+struct Four: Number, Equatable {
+    
+    var value: Int = 4
+}

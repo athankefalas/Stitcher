@@ -13,9 +13,10 @@ class TrackingSharedInstanceStorage<Value: AnyObject>: InstanceStorage {
     let key: Key
     
     private let _storedValue: WeakReference<Value>
+    private let _value_getter: (WeakReference<Value>) -> Any?
     
     var value: Any? {
-        _storedValue.pointee
+        _value_getter(_storedValue)
     }
     
     private var subscription: AnyCancellable?
@@ -23,6 +24,8 @@ class TrackingSharedInstanceStorage<Value: AnyObject>: InstanceStorage {
     init(key: Key, value: Value, tracking publisher: AnyPublisher<Void, Never>) {
         self.key = key
         self._storedValue = WeakReference(value)
+        self._value_getter = { $0.pointee }
+        
         self.subscription = publisher.sink { [weak self] in
             self?.clear()
         }
@@ -32,6 +35,8 @@ class TrackingSharedInstanceStorage<Value: AnyObject>: InstanceStorage {
     init<V>(key: Key, value: V, tracking publisher: AnyPublisher<Void, Never>) where Value == Wrapper<V> {
         self.key = key
         self._storedValue = WeakReference(Wrapper(wrappedValue: value))
+        self._value_getter = { $0.pointee?.wrappedValue }
+        
         self.subscription = publisher.sink { [weak self] in
             self?.clear()
         }

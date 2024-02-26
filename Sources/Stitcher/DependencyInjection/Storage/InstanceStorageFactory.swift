@@ -9,26 +9,31 @@ import Foundation
 
 enum InstanceStorageFactory {
     
-    @_disfavoredOverload
     static func makeInstanceStorage<T>(
         for key: InstanceStorageKey,
         value instance: T,
         scope: DependencyScope
     ) -> AnyInstanceStorage {
         
-        switch scope {
-        case .instance:
-            return NeverInstanceStorage(key: key).erased()
-        case .shared:
-            return SharedInstanceStorage(key: key, value: instance).erased()
-        case .singleton:
-            return SingletonInstanceStorage(key: key, value: instance).erased()
-        case .tracking(let publisher):
-            return TrackingSharedInstanceStorage(key: key, value: instance, tracking: publisher).erased()
+        let mirror = Mirror(reflecting: instance)
+        let isReferenceType = mirror.displayStyle == .class
+        
+        guard isReferenceType else {
+            return _makeInstanceStorage(
+                for: key,
+                value: instance,
+                scope: scope
+            )
         }
+        
+        return _makeReferenceInstanceStorage(
+            for: key,
+            value: instance as AnyObject,
+            scope: scope
+        )
     }
     
-    static func makeInstanceStorage<T: AnyObject>(
+    private static func _makeInstanceStorage<T>(
         for key: InstanceStorageKey,
         value instance: T,
         scope: DependencyScope
@@ -41,7 +46,25 @@ enum InstanceStorageFactory {
             return SharedInstanceStorage(key: key, value: instance).erased()
         case .singleton:
             return SingletonInstanceStorage(key: key, value: instance).erased()
-        case .tracking(let publisher):
+        case .managed(let publisher):
+            return TrackingSharedInstanceStorage(key: key, value: instance, tracking: publisher).erased()
+        }
+    }
+    
+    private static func _makeReferenceInstanceStorage<T: AnyObject>(
+        for key: InstanceStorageKey,
+        value instance: T,
+        scope: DependencyScope
+    ) -> AnyInstanceStorage {
+        
+        switch scope {
+        case .instance:
+            return NeverInstanceStorage(key: key).erased()
+        case .shared:
+            return SharedInstanceStorage(key: key, value: instance).erased()
+        case .singleton:
+            return SingletonInstanceStorage(key: key, value: instance).erased()
+        case .managed(let publisher):
             return TrackingSharedInstanceStorage(key: key, value: instance, tracking: publisher).erased()
         }
     }
