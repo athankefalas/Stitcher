@@ -27,7 +27,7 @@ public extension Injected {
                 parameters: repeat each parameters
             )
         } unexpectedFailure: {
-            preconditionFailure("InjectionError: \($0)", file: file, line: line)
+            fatal($0, file: file, line: line)
         }
     }
     
@@ -50,7 +50,7 @@ public extension Injected {
                 parameters: repeat each parameters
             )
         } unexpectedFailure: {
-            preconditionFailure("InjectionError: \($0)", file: file, line: line)
+            fatal($0, file: file, line: line)
         }
     }
     
@@ -73,7 +73,7 @@ public extension Injected {
                 parameters: repeat each parameters
             )
         } unexpectedFailure: {
-            preconditionFailure("InjectionError: \($0)", file: file, line: line)
+            fatal($0, file: file, line: line)
         }
     }
 }
@@ -99,7 +99,7 @@ public extension Injected {
                 parameters: repeat each parameters
             )
         } unexpectedFailure: {
-            preconditionFailure("InjectionError: \($0)", file: file, line: line)
+            fatal($0, file: file, line: line)
         }
     }
 }
@@ -124,7 +124,7 @@ public extension Injected where Value: DependencyContainingCollection {
                 parameters: repeat each parameters
             )
         } unexpectedFailure: {
-            preconditionFailure("InjectionError: \($0)", file: file, line: line)
+            fatal($0, file: file, line: line)
         }
     }
 }
@@ -149,7 +149,7 @@ public extension Injected {
                 parameters: repeat each parameters
             )
         } unexpectedFailure: {
-            preconditionFailure("InjectionError: \($0)", file: file, line: line)
+            fatal($0, file: file, line: line)
         }
     }
     
@@ -171,7 +171,7 @@ public extension Injected {
                 parameters: repeat each parameters
             )
         } unexpectedFailure: {
-            preconditionFailure("InjectionError: \($0)", file: file, line: line)
+            fatal($0, file: file, line: line)
         }
     }
 }
@@ -197,7 +197,7 @@ public extension Injected {
                 parameters: repeat each parameters
             )
         } unexpectedFailure: {
-            preconditionFailure("InjectionError: \($0)", file: file, line: line)
+            fatal($0, file: file, line: line)
         }
     }
 }

@@ -128,6 +128,16 @@ public enum DependencyGraph {
         storage.removeValue(forKey: storageKey)
     }
     
+    static func dependencyRegistrations() -> [RawDependencyRegistration] {
+        return activeContainers
+            .values
+            .map({ $0.registrar })
+            .reduce(OrderedSet<RawDependencyRegistration>()) { partialResult, containerRegistrar in
+                partialResult.union(containerRegistrar)
+            }
+            .map({ $0 })
+    }
+    
     static func dependencyRegistrations(
         matching locator: DependencyLocator.MatchProposal
     ) -> OrderedSet<RawDependencyRegistration> {
