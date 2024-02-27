@@ -7,18 +7,19 @@
 
 import Foundation
 import Combine
+import OrderedCollections
 
 /// A type that contains all active `DependencyContainers` and can be used to inject dependencies.
 public enum DependencyGraph {
     
     @Atomic
-    private static var activeContainers: [AnyHashable : DependencyContainer] = [:]
+    private static var activeContainers: OrderedDictionary<AnyHashable, DependencyContainer> = [:]
     
     @Atomic
     private static var storage: [InstanceStorageKey : AnyInstanceStorage] = [:]
     
     @Atomic
-    private static var registrationCache: [DependencyLocator.MatchProposal : Set<RawDependencyRegistration>] = [:]
+    private static var registrationCache: [DependencyLocator.MatchProposal : OrderedSet<RawDependencyRegistration>] = [:]
     
     @Atomic
     private static var subscriptions: [AnyHashable : AnyCancellable] = [:]
@@ -129,7 +130,7 @@ public enum DependencyGraph {
     
     static func dependencyRegistrations(
         matching locator: DependencyLocator.MatchProposal
-    ) -> Set<RawDependencyRegistration> {
+    ) -> OrderedSet<RawDependencyRegistration> {
         
         if let cachedRegistrations = registrationCache[locator] {
             return cachedRegistrations
@@ -138,7 +139,7 @@ public enum DependencyGraph {
         let matchingRegistrations = activeContainers.values
             .flatMap({ $0.dependecyRegistrations(matching: locator) })
         
-        let distinctMatches = Set(matchingRegistrations)
+        let distinctMatches = OrderedSet(matchingRegistrations)
         registrationCache[locator] = distinctMatches
         
         return distinctMatches
@@ -160,8 +161,7 @@ public enum DependencyGraph {
         }
         
         do {
-            let dependencyCycleDetector = DependencyCycleDetector(on: registration)
-            let instance = try dependencyCycleDetector.withCycleDetection {
+            let instance = try withCycleDetection(registration.locator) {
                 try registration.factory.makeInstance(parameters)
             }
             

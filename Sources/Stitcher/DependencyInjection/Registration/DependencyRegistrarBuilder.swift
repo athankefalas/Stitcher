@@ -55,7 +55,7 @@ public struct DependencyRegistrarBuilder {
         _ expression: DependencyRepresentation
     ) -> Output {
         
-        return Output([RawDependencyRegistration(expression.dependency)])
+        return Output([RawDependencyRegistration(expression)])
     }
     
     @_disfavoredOverload

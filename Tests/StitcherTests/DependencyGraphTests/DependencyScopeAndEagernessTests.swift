@@ -129,8 +129,11 @@ final class DependencyScopeAndEagernessTests: XCTestCase {
     
     func test_sharedScopeWeakly_withReferenceTypes() throws {
         let objectId: () throws -> ObjectIdentifier = {
-            let dependency: Beta = try DependencyGraph.injectDependency()
-            return ObjectIdentifier(dependency)
+            var dependency: Beta = try DependencyGraph.injectDependency()
+            let result = ObjectIdentifier(dependency)
+            dependency = Beta()
+            
+            return result
         }
         
         let oneId = try objectId()

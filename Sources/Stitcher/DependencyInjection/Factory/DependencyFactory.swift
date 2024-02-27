@@ -7,7 +7,19 @@
 
 import Foundation
 
-struct DependencyFactory: Hashable {
+/// A type that can instantiate a dependency
+public struct DependencyFactory: Hashable {
+    
+    public struct Provider<T> {
+        
+        let factory: DependencyFactory
+        
+        public init<each Parameter: Hashable>(
+            function: @Sendable @escaping (repeat each Parameter) -> T
+        ) {
+            self.factory = .from(function: function)
+        }
+    }
     
     let type: TypeName
     let parameters: DependencyParameters.Requirement
@@ -26,7 +38,7 @@ struct DependencyFactory: Hashable {
         self.instanceStorageFactory = instanceStorageFactory
     }
     
-    func hash(into hasher: inout Hasher) {
+    public func hash(into hasher: inout Hasher) {
         hasher.combine(type)
         hasher.combine(parameters)
     }
@@ -34,7 +46,13 @@ struct DependencyFactory: Hashable {
     func makeInstance(
         _ parameters: DependencyParameters = .none
     ) throws -> Any {
-        return try instanceFactory(parameters)
+        let instance = try instanceFactory(parameters)
+        
+        if let postInstantiationAwareInstance = instance as? PostInstantiationAware {
+            postInstantiationAwareInstance.didInstantiate()
+        }
+        
+        return instance
     }
     
     func makeInstanceStorage(
@@ -45,7 +63,7 @@ struct DependencyFactory: Hashable {
         return instanceStorageFactory(key, instance, scope)
     }
     
-    static func == (lhs: DependencyFactory, rhs: DependencyFactory) -> Bool {
+    public static func == (lhs: DependencyFactory, rhs: DependencyFactory) -> Bool {
         lhs.type == rhs.type && lhs.parameters == rhs.parameters
     }
 }

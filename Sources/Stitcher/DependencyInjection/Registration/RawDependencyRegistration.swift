@@ -34,4 +34,13 @@ public struct RawDependencyRegistration: Hashable {
         self.scope = dependency.scope
         self.eagerness = dependency.eagerness
     }
+    
+    init<Representation: DependencyRepresenting>(
+        _ representation: Representation
+    ) {
+        self.locator = representation.locator
+        self.factory = representation.dependencyProvider.factory
+        self.scope = representation.scope
+        self.eagerness = representation.eagerness
+    }
 }

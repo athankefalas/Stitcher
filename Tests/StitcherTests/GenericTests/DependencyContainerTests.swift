@@ -11,15 +11,15 @@ import Combine
 
 final class DependencyContainerTests: XCTestCase {
     
+    // Utility Types
+    
     struct BetaRegistration: DependencyRepresenting {
         
-        var dependency: Dependency<Beta, MaybeTypeLocatedDependency> {
-            Dependency {
+        var dependencyProvider: DependencyFactory.Provider<Beta> {
+            DependencyFactory.Provider {
                 Beta()
             }
         }
-        
-        init() {}
     }
     
     static var zetaInitializations = 0
@@ -36,7 +36,7 @@ final class DependencyContainerTests: XCTestCase {
         }
     }
     
-    @available(macOS 14.0, *)
+    @available(macOS 14.0, iOS 17.0, watchOS 10.0, tvOS 17.0, *)
     @Observable
     class StateHolder {
         var isOn: Bool
@@ -54,6 +54,8 @@ final class DependencyContainerTests: XCTestCase {
             self.isOn = isOn
         }
     }
+    
+    // Positive
     
     func test_dependencyContainer_registarBuilder() throws {
         let container = DependencyContainer {
@@ -99,7 +101,7 @@ final class DependencyContainerTests: XCTestCase {
             Dependency {
                 Beta()
             }
-            .named("Beta")            
+            .named("Beta")
         }
         
         let alphaRegistrations = container.dependecyRegistrations(matching: .init(byName: "Alpha"))
@@ -108,7 +110,7 @@ final class DependencyContainerTests: XCTestCase {
         XCTAssert(betaRegistrations.count == 1)
     }
     
-    @available(macOS 14.0, *)
+    @available(macOS 14.0, iOS 17.0, watchOS 10.0, tvOS 17.0, *)
     func test_dependencyContainer_observationInvalidation() throws {
         let state = StateHolder(isOn: true)
         let container = DependencyContainer {
