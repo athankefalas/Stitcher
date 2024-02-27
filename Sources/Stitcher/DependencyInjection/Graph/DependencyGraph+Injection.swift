@@ -37,11 +37,11 @@ public extension DependencyGraph {
             throw InjectionError.multipleDependencies(.name(name))
         }
         
-        guard let dependency = try instantiateDependency(from: registration, parameters) as? SomeDependecy else {
-            throw InjectionError.mismatchedDependencyType
-        }
-        
-        return dependency
+        return try instantiateDependency(
+            as: SomeDependecy.self,
+            from: registration,
+            parameters
+        )
     }
     
     /// Injects the dependency registered by the given name
@@ -72,11 +72,11 @@ public extension DependencyGraph {
             throw InjectionError.multipleDependencies(.name(name))
         }
         
-        guard let dependency = try instantiateDependency(from: registration, parameters) as? SomeDependecy else {
-            throw InjectionError.mismatchedDependencyType
-        }
-        
-        return dependency
+        return try instantiateDependency(
+            as: SomeDependecy.self,
+            from: registration,
+            parameters
+        )
     }
     
     /// Injects the dependency registered by the given name
@@ -107,11 +107,11 @@ public extension DependencyGraph {
             throw InjectionError.multipleDependencies(.name(name))
         }
         
-        guard let dependency = try instantiateDependency(from: registration, parameters) as? SomeDependecy else {
-            throw InjectionError.mismatchedDependencyType
-        }
-        
-        return dependency
+        return try instantiateDependency(
+            as: SomeDependecy.self,
+            from: registration,
+            parameters
+        )
     }
     
     
@@ -143,11 +143,11 @@ public extension DependencyGraph {
             throw InjectionError.multipleDependencies(.type("\(type)"))
         }
         
-        guard let dependency = try instantiateDependency(from: registration, parameters) as? SomeDependecy else {
-            throw InjectionError.mismatchedDependencyType
-        }
-        
-        return dependency
+        return try instantiateDependency(
+            as: SomeDependecy.self,
+            from: registration,
+            parameters
+        )
     }
     
     /// Injects all dependencies registered by the given type
@@ -169,11 +169,11 @@ public extension DependencyGraph {
             .filter( { $0.factory.parameters.isSatisfied(by: parameters) })
         
         let dependencies = try registrations.map { registration in
-            guard let dependency = try instantiateDependency(from: registration, parameters) as? SomeDependecy else {
-                throw InjectionError.mismatchedDependencyType
-            }
-            
-            return dependency
+            return try instantiateDependency(
+                as: SomeDependecy.self,
+                from: registration,
+                parameters
+            )
         }
         
         return Container(dependencies)
@@ -205,11 +205,11 @@ public extension DependencyGraph {
             throw InjectionError.multipleDependencies(.type("\(type)"))
         }
         
-        guard let dependency = try instantiateDependency(from: registration, parameters) as? SomeDependecy else {
-            throw InjectionError.mismatchedDependencyType
-        }
-        
-        return dependency
+        return try instantiateDependency(
+            as: SomeDependecy.self,
+            from: registration,
+            parameters
+        )
     }
     
     
@@ -233,11 +233,11 @@ public extension DependencyGraph {
             .filter( { $0.factory.parameters.isSatisfied(by: parameters) })
         
         let dependencies = try registrations.map { registration in
-            guard let dependency = try instantiateDependency(from: registration, parameters) as? SomeDependecy else {
-                throw InjectionError.mismatchedDependencyType
-            }
-            
-            return dependency
+            return try instantiateDependency(
+                as: SomeDependecy.self,
+                from: registration,
+                parameters
+            )
         }
         
         return Container(dependencies)
@@ -269,10 +269,10 @@ public extension DependencyGraph {
             throw InjectionError.multipleDependencies(.value(value))
         }
         
-        guard let dependency = try instantiateDependency(from: registration, parameters) as? SomeDependecy else {
-            throw InjectionError.mismatchedDependencyType
-        }
-        
-        return dependency
+        return try instantiateDependency(
+            as: SomeDependecy.self,
+            from: registration,
+            parameters
+        )
     }
 }

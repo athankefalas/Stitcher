@@ -14,12 +14,13 @@ public enum DependencyScope: Hashable {
     case instance
     
     /// A shared instance of the dependency will be created, and used while there are references to it.
+    /// - Note: For value types this is equivalent to the `.instance` scope because they cannot be reference counted.
     case shared
     
-    /// A shared instance of the dependency will be created, and used throughout the lifetime of the application.
+    /// A singleton instance of the dependency will be created, and used throughout the lifetime of the application.
     case singleton
     
-    /// A shared instance of the dependency will be created, and used while there are references to it or the given publisher fires.
+    /// A singleton instance of the dependency will be created, and used until the given publisher fires.
     case managed(AnyPublisher<Void, Never>)
     
     private var caseIdentifier: Int {

@@ -205,4 +205,19 @@ public enum DependencyGraph {
             }
         }
     }
+    
+    @discardableResult
+    static func instantiateDependency<T>(
+        as dependencyType: T.Type,
+        from registration: RawDependencyRegistration,
+        _ parameters: DependencyParameters
+    ) throws -> T {
+        let dependency = try instantiateDependency(from: registration, parameters)
+        
+        guard let typedDependency = dependency as? T else {
+            throw InjectionError.mismatchedDependencyType("\(type(of: dependency))", expected: "\(dependencyType)")
+        }
+        
+        return typedDependency
+    }
 }

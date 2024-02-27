@@ -60,21 +60,25 @@ protocol Number: TypePrinting {
 
 struct One: Number, Equatable {
     
+    let id = UUID()
     var value: Int = 1
 }
 
 struct Two: Number, Equatable {
     
+    let id = UUID()
     var value: Int = 2
 }
 
 struct Three: Number, Equatable {
     
+    let id = UUID()
     var value: Int = 3
 }
 
 struct Four: Number, Equatable {
     
+    let id = UUID()
     var value: Int = 4
 }
 

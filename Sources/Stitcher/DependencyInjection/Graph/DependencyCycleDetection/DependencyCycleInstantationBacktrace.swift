@@ -7,17 +7,19 @@
 
 import Foundation
 
+/// A backtrace collected during instantiation of a dependency that had a cyclic relationship with another dependency.
 public struct DependencyCycleInstantationBacktrace: CustomStringConvertible {
     
-    let depth: Int
-    let cycle: [InjectionError.DependencyContext]
+    /// The depth of the cycle.
+    public let depth: Int
+    
+    /// An ordered sequence of the types that resulted in a cycle.
+    public let cycle: [InjectionError.DependencyContext]
     
     public var description: String {
-        let cycle = cycle
+        return cycle
             .map(\.description)
             .joined(separator: " -> ")
-        
-        return "[Depth: \(depth), Cycle: \(cycle)]"
     }
     
     init<Backtrace: Sequence>(

@@ -68,17 +68,22 @@ final class DependencyCycleDetectorTests: XCTestCase {
             return 0
         }
         
-        Task {
-            let _ = try withCycleDetection(.name("0")) {
-                return 0
+        let count = 100
+        let expectation = XCTestExpectation(description: "Injection tasks completed.")
+        expectation.expectedFulfillmentCount = count
+        expectation.assertForOverFulfill = true
+        
+        for n in 1...count {
+            Task {
+                let _ = try withCycleDetection(.name("0")) {
+                    return n
+                }
+                
+                expectation.fulfill()
             }
         }
         
-        Task {
-            let _ = try withCycleDetection(.name("0")) {
-                return 0
-            }
-        }
+        wait(for: [expectation], timeout: 0.5)
     }
     
     // Negative

@@ -1,5 +1,5 @@
 //
-//  TrackingSharedInstanceStorage.swift
+//  ManagedSingletonInstanceStorage.swift
 //
 //
 //  Created by Αθανάσιος Κεφαλάς on 5/2/24.
@@ -8,12 +8,13 @@
 import Foundation
 import Combine
 
-class TrackingSharedInstanceStorage<Value: AnyObject>: InstanceStorage {
+class ManagedSingletonInstanceStorage<Value: AnyObject>: InstanceStorage {
     
     let key: Key
     
-    private let _storedValue: WeakReference<Value>
-    private let _value_getter: (WeakReference<Value>) -> Any?
+    @Atomic
+    private var _storedValue: Value?
+    private let _value_getter: (Value?) -> Any?
     
     var value: Any? {
         _value_getter(_storedValue)
@@ -23,8 +24,8 @@ class TrackingSharedInstanceStorage<Value: AnyObject>: InstanceStorage {
     
     init(key: Key, value: Value, tracking publisher: AnyPublisher<Void, Never>) {
         self.key = key
-        self._storedValue = WeakReference(value)
-        self._value_getter = { $0.pointee }
+        self._storedValue = value
+        self._value_getter = { $0 }
         
         self.subscription = publisher.sink { [weak self] in
             self?.clear()
@@ -34,8 +35,8 @@ class TrackingSharedInstanceStorage<Value: AnyObject>: InstanceStorage {
     @_disfavoredOverload
     init<V>(key: Key, value: V, tracking publisher: AnyPublisher<Void, Never>) where Value == Wrapper<V> {
         self.key = key
-        self._storedValue = WeakReference(Wrapper(wrappedValue: value))
-        self._value_getter = { $0.pointee?.wrappedValue }
+        self._storedValue = Wrapper(wrappedValue: value)
+        self._value_getter = { $0?.wrappedValue }
         
         self.subscription = publisher.sink { [weak self] in
             self?.clear()
@@ -48,14 +49,14 @@ class TrackingSharedInstanceStorage<Value: AnyObject>: InstanceStorage {
     }
     
     private func clear() {
-        _storedValue.release()
+        _storedValue = nil
     }
     
     func hash(into hasher: inout Hasher) {
         hasher.combine(key)
     }
     
-    static func == (lhs: TrackingSharedInstanceStorage<Value>, rhs: TrackingSharedInstanceStorage<Value>) -> Bool {
-        lhs.key == rhs.key && lhs._storedValue.pointee === rhs._storedValue.pointee
+    static func == (lhs: ManagedSingletonInstanceStorage<Value>, rhs: ManagedSingletonInstanceStorage<Value>) -> Bool {
+        lhs.key == rhs.key && lhs._storedValue === rhs._storedValue
     }
 }

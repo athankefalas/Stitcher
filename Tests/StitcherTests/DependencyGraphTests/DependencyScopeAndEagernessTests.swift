@@ -161,6 +161,40 @@ final class DependencyScopeAndEagernessTests: XCTestCase {
         XCTAssert(one !== other)
     }
     
+    // Value Types
+
+    func test_instanceScope_withValueTypes() throws {
+        let one: One = try DependencyGraph.injectDependency()
+        let other: One = try DependencyGraph.injectDependency()
+        XCTAssert(one.id != other.id)
+    }
+    
+    func test_sharedScope_withValueTypes() throws {
+        let one: Two = try DependencyGraph.injectDependency()
+        let other: Two = try DependencyGraph.injectDependency()
+        XCTAssert(one.id != other.id)
+    }
+    
+    func test_singletonScope_withValueTypes() throws {
+        let one: Three = try DependencyGraph.injectDependency()
+        let other: Three = try DependencyGraph.injectDependency()
+        XCTAssert(one.id == other.id)
+    }
+    
+    func test_managedScope_withValueTypes() throws {
+        let one: Four = try DependencyGraph.injectDependency()
+        let other: Four = try DependencyGraph.injectDependency()
+        XCTAssert(one.id == other.id)
+    }
+    
+    func test_managedScopeInvalidates_withValueTypes() throws {
+        let one: Four = try DependencyGraph.injectDependency()
+        Self.invalidationSubject.send()
+        
+        let other: Four = try DependencyGraph.injectDependency()
+        XCTAssert(one.id != other.id)
+    }
+    
     // Eagerness
     
     func test_eagerDependencyInstantiates() throws {

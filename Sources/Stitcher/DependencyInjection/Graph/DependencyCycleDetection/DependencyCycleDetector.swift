@@ -9,12 +9,15 @@ import Foundation
 import Combine
 import OrderedCollections
 
-class DependencyCycleDetector {
+fileprivate class DependencyCycleDetector {
     
     @TaskLocal
     fileprivate static var instantiationBacktrace: OrderedSet<DependencyLocator> = []
     
-    fileprivate static func preventCycle(for locator: DependencyLocator) throws {
+    fileprivate static func preventCycle(
+        instantiating locator: DependencyLocator
+    ) throws {
+        
         guard !instantiationBacktrace.contains(locator) else {
             let backtrace = DependencyCycleInstantationBacktrace(
                 instantiationBacktrace,
@@ -50,7 +53,7 @@ func withCycleDetection<Result>(
     perform action: () throws -> Result
 ) throws -> Result {
     
-    try DependencyCycleDetector.preventCycle(for: locator)
+    try DependencyCycleDetector.preventCycle(instantiating: locator)
     
     return try DependencyCycleDetector.traceInstantiation(locator) {
         return try action()

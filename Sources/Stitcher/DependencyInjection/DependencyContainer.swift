@@ -42,7 +42,8 @@ import Observation
 ///
 /// ```
 ///
-public final class DependencyContainer: Identifiable {
+public final class DependencyContainer: Identifiable, Equatable {
+    
     /// A set of raw dependency registrations
     public typealias DependenciesRegistrar = Set<RawDependencyRegistration>
     
@@ -221,6 +222,10 @@ public final class DependencyContainer: Identifiable {
                 newValue: newValue
             )
         )
+    }
+    
+    public static func == (lhs: DependencyContainer, rhs: DependencyContainer) -> Bool {
+        return lhs.id == rhs.id || lhs.registrar.hashValue == rhs.registrar.hashValue
     }
 }
 
