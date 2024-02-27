@@ -10,7 +10,7 @@ import Foundation
 extension DependencyFactory {
     
     static func from<T, each Parameter: Hashable>(
-        function: @Sendable @escaping (repeat each Parameter) -> T
+        function: @Sendable @escaping (repeat each Parameter) throws -> T
     ) -> DependencyFactory {
         
         self.init(

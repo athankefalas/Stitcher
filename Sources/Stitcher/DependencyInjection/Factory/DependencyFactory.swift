@@ -15,7 +15,7 @@ public struct DependencyFactory: Hashable {
         let factory: DependencyFactory
         
         public init<each Parameter: Hashable>(
-            function: @Sendable @escaping (repeat each Parameter) -> T
+            function: @Sendable @escaping (repeat each Parameter) throws -> T
         ) {
             self.factory = .from(function: function)
         }

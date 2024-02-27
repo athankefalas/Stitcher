@@ -11,10 +11,21 @@ import Foundation
 public enum InjectionError: Error {
     
     /// The context used to locate the dependency.
-    public enum DependencyContext: Equatable {
+    public enum DependencyContext: Equatable, CustomStringConvertible {
         case name(String)
         case type(String)
         case value(AnyHashable)
+        
+        public var description: String {
+            switch self {
+            case .name(let name):
+                "Name[\(name)]"
+            case .type(let type):
+                "Type[\(type)]"
+            case .value(let value):
+                "Value[\(value)]"
+            }
+        }
     }
     
     /// The context of a parameter used to instantiate a dependency.
@@ -28,7 +39,7 @@ public enum InjectionError: Error {
     case mismatchedDependencyType
     case missingDependency(DependencyContext)
     case multipleDependencies(DependencyContext)
-    case cyclicDependencyReference(DependencyContext)
+    case cyclicDependencyReference(DependencyCycleInstantationBacktrace)
     case invalidDependencyParameters(DependencyContext, DependencyParameterContext, parameters: [AnyHashable])
     
     static func wrapping(_ error: Error) -> InjectionError {

@@ -22,7 +22,7 @@ struct DependencyParameters: Hashable {
         }
         
         init<R, each Parameter: Hashable>(
-            from function: (repeat each Parameter) -> R
+            from function: (repeat each Parameter) throws -> R
         ) {
             self.types = Self.readTypeNames(from: function)
         }
@@ -42,7 +42,7 @@ struct DependencyParameters: Hashable {
         static let none = Requirement()
         
         private static func readTypeNames<R, each Parameter: Hashable>(
-            from function: (repeat each Parameter) -> R
+            from function: (repeat each Parameter) throws -> R
         ) -> [TypeName] {
             
             let tuple = (repeat TypeName.Reader<each Parameter>())
@@ -178,11 +178,11 @@ extension DependencyParameters {
     }
     
     func withPackedParameters<Value, each Parameter: Hashable>(
-        invoke function: (repeat each Parameter) -> Value
+        invoke function: (repeat each Parameter) throws -> Value
     ) throws -> Value {
         
         var parameterValues = parameterValues
-        let result = function(
+        let result = try function(
             repeat try Repack<each Parameter>(
                 from: &parameterValues,
                 count: count

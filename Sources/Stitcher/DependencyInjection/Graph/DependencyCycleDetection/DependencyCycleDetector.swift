@@ -7,15 +7,21 @@
 
 import Foundation
 import Combine
+import OrderedCollections
 
 class DependencyCycleDetector {
     
     @TaskLocal
-    fileprivate static var instantiationBacktrace: Set<DependencyLocator> = []
+    fileprivate static var instantiationBacktrace: OrderedSet<DependencyLocator> = []
     
     fileprivate static func preventCycle(for locator: DependencyLocator) throws {
         guard !instantiationBacktrace.contains(locator) else {
-            throw InjectionError.cyclicDependencyReference(locator.dependencyContext())
+            let backtrace = DependencyCycleInstantationBacktrace(
+                instantiationBacktrace,
+                triggeredBy: locator
+            )
+            
+            throw InjectionError.cyclicDependencyReference(backtrace)
         }
     }
     
@@ -29,11 +35,11 @@ class DependencyCycleDetector {
     }
 }
 
-fileprivate extension Set {
+fileprivate extension OrderedSet {
     
-    func inserting(_ element: Element) -> Set<Element> {
+    func inserting(_ element: Element) -> Self {
         var copy = self
-        copy.insert(element)
+        copy.append(element)
         
         return copy
     }

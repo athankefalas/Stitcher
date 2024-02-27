@@ -99,7 +99,7 @@ public extension Dependency where LocatorTrait == NameLocatedDependency {
     ///   - provider: A function that provides an instance of the dependency.
     init<each Parameter: Hashable>(
         named name: String,
-        dependecy provider: @Sendable @escaping (repeat each Parameter) -> T
+        dependecy provider: @Sendable @escaping (repeat each Parameter) throws -> T
     ) {
         
         self.init(
@@ -116,7 +116,7 @@ public extension Dependency where LocatorTrait == NameLocatedDependency {
     ///   - provider: A function that provides an instance of the dependency.
     init<NameRepresentation: CustomStringConvertible, each Parameter: Hashable>(
         named nameRepresentation: NameRepresentation,
-        dependecy provider: @Sendable @escaping (repeat each Parameter) -> T
+        dependecy provider: @Sendable @escaping (repeat each Parameter) throws -> T
     ) {
         
         self.init(
@@ -133,7 +133,7 @@ public extension Dependency where LocatorTrait == NameLocatedDependency {
     ///   - provider: A function that provides an instance of the dependency.
     init<NameRepresentation: RawRepresentable, each Parameter: Hashable>(
         named nameRepresentation: NameRepresentation,
-        dependecy provider: @Sendable @escaping (repeat each Parameter) -> T
+        dependecy provider: @Sendable @escaping (repeat each Parameter) throws -> T
     ) where NameRepresentation.RawValue == String {
         
         self.init(
@@ -152,7 +152,7 @@ public extension Dependency where LocatorTrait == MaybeTypeLocatedDependency {
     /// Initalizes a dependency registration located by it's type.
     /// - Parameter provider: A function that provides an instance of the dependency.
     init<each Parameter: Hashable>(
-        dependecy provider: @Sendable @escaping (repeat each Parameter) -> T
+        dependecy provider: @Sendable @escaping (repeat each Parameter) throws -> T
     ) {
         
         self.init(
@@ -260,7 +260,7 @@ public extension Dependency where LocatorTrait == TypeLocatedDependency {
     ///   - provider: A function that provides an instance of the dependency.
     init<S, each Parameter: Hashable>(
         conformingTo secondaryType: S.Type,
-        dependecy provider: @Sendable @escaping (repeat each Parameter) -> T
+        dependecy provider: @Sendable @escaping (repeat each Parameter) throws -> T
     ) {
         
         self.init(
@@ -277,7 +277,7 @@ public extension Dependency where LocatorTrait == TypeLocatedDependency {
     ///   - provider: A function that provides an instance of the dependency.
     init<S, each Parameter: Hashable>(
         inheritingFrom secondaryType: S.Type,
-        dependecy provider: @Sendable @escaping (repeat each Parameter) -> T
+        dependecy provider: @Sendable @escaping (repeat each Parameter) throws -> T
     ) {
         
         self.init(
@@ -323,7 +323,7 @@ public extension Dependency where LocatorTrait == ValueLocatedDependency {
     ///   - provider: A function that provides an instance of the dependency.
     init<V: Hashable, each Parameter: Hashable>(
         for value: V,
-        dependecy provider: @Sendable @escaping (repeat each Parameter) -> T
+        dependecy provider: @Sendable @escaping (repeat each Parameter) throws -> T
     ) {
         
         self.init(

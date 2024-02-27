@@ -26,13 +26,27 @@ final class DependencyCycleDetectorTests: XCTestCase {
     
     class Eta {
         
-        init() {}
+        let zeta: Zeta
+                
+        init(zeta: Zeta) {
+            self.zeta = zeta
+        }
+        
+        convenience init() throws {
+            let zeta: Zeta = try DependencyGraph.injectDependency()
+            self.init(zeta: zeta)
+        }
     }
     
     let container = DependencyContainer {
-        try! Zeta()
         
-        Eta()
+        Dependency {
+            try Zeta()
+        }
+        
+        Dependency {
+            try Eta()
+        }
     }
 
     override func setUpWithError() throws {
@@ -67,6 +81,8 @@ final class DependencyCycleDetectorTests: XCTestCase {
         }
     }
     
+    // Negative
+    
     func test_dependencyCycleDetection_triggered() throws {
         do {
             let _ = try withCycleDetection(.name("0")) {
@@ -80,8 +96,24 @@ final class DependencyCycleDetectorTests: XCTestCase {
             let injectionError = InjectionError.wrapping(error)
             
             switch injectionError {
-            case .cyclicDependencyReference(let dependencyContext):
+            case .cyclicDependencyReference:
                 break
+            default:
+                throw injectionError
+            }
+        }
+    }
+    
+    func test_dependencyCycleDetection_viaGraphTriggered() throws {
+        do {
+            let _: Eta = try DependencyGraph.injectDependency()
+            XCTFail("Cyclic dependency error not triggered.")
+        } catch {
+            let injectionError = InjectionError.wrapping(error)
+            
+            switch injectionError {
+            case .cyclicDependencyReference(let context):
+                XCTAssert(context.depth == 3)
             default:
                 throw injectionError
             }
