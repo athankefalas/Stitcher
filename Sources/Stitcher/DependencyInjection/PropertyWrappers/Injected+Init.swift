@@ -58,7 +58,6 @@ public extension Injected {
     /// - Parameters:
     ///   - name: A type that represents the name of the dependency.
     ///   - parameters: The parameters used to instantiate the dependency.
-    @_disfavoredOverload
     init<Name: RawRepresentable, each Parameter: Hashable>(
         name: Name,
         _ parameters: repeat each Parameter,
@@ -77,6 +76,8 @@ public extension Injected {
         }
     }
 }
+
+
 
 // MARK: By Type
 
@@ -128,6 +129,8 @@ public extension Injected where Value: DependencyContainingCollection {
         }
     }
 }
+
+
 
 // MARK: By Optional Type
 
@@ -184,6 +187,7 @@ public extension Injected {
     /// - Parameters:
     ///   - value: The value associated with the dependency.
     ///   - parameters: The parameters used to instantiate the dependency.
+    @_disfavoredOverload
     init<V: Hashable, each Parameter: Hashable>(
         value: V,
         _ parameters: repeat each Parameter,

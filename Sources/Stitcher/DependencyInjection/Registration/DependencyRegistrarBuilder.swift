@@ -44,10 +44,10 @@ public struct DependencyRegistrarBuilder {
     
     
     public static func buildExpression(
-        _ expression: DependencyContainer
+        _ expression: DependencyGroup
     ) -> Output {
         
-        return expression.registrar
+        return expression.dependencies()
     }
     
     
@@ -56,6 +56,13 @@ public struct DependencyRegistrarBuilder {
     ) -> Output {
         
         return Output([RawDependencyRegistration(expression)])
+    }
+    
+    static func buildExpression<DependencyGroupRepresentation: DependencyGroupRepresenting>(
+        _ expression: DependencyGroupRepresentation
+    ) -> Output {
+        
+        return expression.dependencies()
     }
     
     @_disfavoredOverload

@@ -19,9 +19,42 @@ import Combine
 @propertyWrapper
 public struct Injected<Value> {
     
+    private enum ValueBox {
+        case empty
+        case loaded(Value)
+        
+        var isEmpty: Bool {
+            switch self {
+            case .empty:
+                return true
+            case .loaded(let value):
+                let defaultValueProvider = DefaultValueProvider(type: Value.self)
+                
+                guard defaultValueProvider.providesDefaultValue else {
+                    return true
+                }
+                
+                return defaultValueProvider.isDefault(value: value)
+            }
+        }
+        
+        var isLoaded: Bool {
+            return !isEmpty
+        }
+        
+        var value: Value? {
+            switch self {
+            case .empty:
+                return nil
+            case .loaded(let value):
+                return value
+            }
+        }
+    }
+    
     private class Storage {
         
-        private var _value: Value?
+        private var _value: ValueBox = .empty
         private let provider: @Sendable () throws -> Value
         private let semaphore = DispatchSemaphore(value: 1)
         private var subscription: AnyCancellable?
@@ -33,7 +66,7 @@ public struct Injected<Value> {
                 semaphore.signal()
             }
             
-            return _value != nil
+            return _value.isLoaded
         }
         
         var value: Value {
@@ -44,12 +77,13 @@ public struct Injected<Value> {
                     semaphore.signal()
                 }
                 
-                if let _value {
-                    return _value
+                if let loadedValue = _value.value,
+                   _value.isLoaded {
+                    return loadedValue
                 }
                 
                 let value = try provider()
-                _value = value
+                _value = .loaded(value)
                 
                 return value
             }
@@ -66,7 +100,7 @@ public struct Injected<Value> {
                 semaphore.signal()
             }
             
-            _value = nil
+            _value = .empty
         }
         
         func autoreload(callback: @escaping () -> Void) {
@@ -81,11 +115,12 @@ public struct Injected<Value> {
     
     private let storage: Storage
     private let unexpectedFailure: (InjectionError) -> Never
+    private let defaultValueProvider = DefaultValueProvider<Value>()
     
     public var wrappedValue: Value {
         get {
             do {
-                return try storage.value
+                return try getStoredValue()
             } catch {
                 unexpectedFailure(.wrapping(error))
             }
@@ -131,6 +166,32 @@ public struct Injected<Value> {
         self.init(collectionType: Value.self, file: file, line: line)
     }
     
+    private func getStoredValue() throws -> Value {
+        do {
+            return try storage.value
+        } catch {
+            return try recoveryValue(for: .wrapping(error))
+        }
+    }
+    
+    private func recoveryValue(
+        for error: InjectionError
+    ) throws -> Value {
+        
+        guard defaultValueProvider.providesDefaultValue else {
+            throw error
+        }
+        
+        switch error {
+        case .missingDependency:
+            return defaultValueProvider.defaultValue()
+        default:
+            break
+        }
+        
+        throw error
+    }
+    
     /// Loads the dependency if an instance of it is not present.
     /// - Throws: An injection error.
     public func loadIfNeeded() throws {
@@ -138,18 +199,18 @@ public struct Injected<Value> {
             return
         }
         
-        try reloadDependency()
+        try reload()
     }
     
     /// Removes the previously injected instance and retrieves a new one from the dependency graph.
     /// - Throws: An injection error.
-    public func reloadDependency() throws {
+    public func reload() throws {
         storage.clear()
         let _ = try storage.value
     }
     
-    /// Enables automatic releading of the wrapped dependency whenever the graph changes.
-    /// - Note: Automatic reloading of injected dependencies can lead to unexpected behaviour. If this function is enabled any
+    /// Enables automatic reloading of the wrapped dependency whenever the graph changes.
+    /// - Note: Automatic reloading of injected dependencies can lead to unexpected behaviour. If this function is enabled, any
     /// synchronization of running tasks executed by the dependency during the change must be manually managed.
     public func autoreload() {
         storage.autoreload {
@@ -157,5 +218,3 @@ public struct Injected<Value> {
         }
     }
 }
-
-

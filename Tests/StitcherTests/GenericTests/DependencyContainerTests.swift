@@ -66,6 +66,10 @@ final class DependencyContainerTests: XCTestCase {
             
             BetaRegistration()
             
+            DependencyGroup {
+                Gamma()
+            }
+            
             Zeta()
         }
         
@@ -77,8 +81,10 @@ final class DependencyContainerTests: XCTestCase {
         
         let alpha: Alpha? = try DependencyGraph.injectDependency()
         let beta: Beta? = try DependencyGraph.injectDependency()
+        let gamma: Gamma? = try DependencyGraph.injectDependency()
         XCTAssertNotNil(alpha)
         XCTAssertNotNil(beta)
+        XCTAssertNotNil(gamma)
         XCTAssert(Self.zetaInitializations == 0)
         
         let zeta: Zeta? = try DependencyGraph.injectDependency()
@@ -119,11 +125,12 @@ final class DependencyContainerTests: XCTestCase {
                 Dependency {
                     Alpha()
                 }
-            } else {
-                Dependency {
-                    Beta()
-                }
             }
+            
+            DependencyGroup {
+                Beta()
+            }
+            .enabled(!state.isOn)
         }
         
         DependencyGraph.activate(container)
@@ -175,11 +182,13 @@ final class DependencyContainerTests: XCTestCase {
                 Dependency {
                     Alpha()
                 }
-            } else {
-                Dependency {
-                    Beta()
-                }
             }
+            
+            DependencyGroup {
+                Beta()
+            }
+            .enabled(!state.isOn)
+            
         }.invalidated(
             tracking: state
         )
