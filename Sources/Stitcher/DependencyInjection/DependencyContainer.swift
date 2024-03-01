@@ -44,9 +44,6 @@ import Observation
 ///
 public final class DependencyContainer: Identifiable, Equatable {
     
-    /// A set of raw dependency registrations
-    public typealias DependenciesRegistrar = Set<RawDependencyRegistration>
-    
     struct ChangeSet {
         let containerId: AnyHashable
         let oldValue: DependenciesRegistrar
@@ -71,7 +68,7 @@ public final class DependencyContainer: Identifiable, Equatable {
         }
     }
     
-    private let semaphore = DispatchSemaphore(value: 1)
+    @Atomic
     private var dependenciesRegistrar: DependenciesRegistrar
     private var dependenciesRegistrarProvider: () -> DependenciesRegistrar
     private let invalidateDependenciesSubject = PassthroughSubject<Void, Never>()
@@ -85,11 +82,7 @@ public final class DependencyContainer: Identifiable, Equatable {
     }
     
     var registrar: DependenciesRegistrar {
-        semaphore.wait()
-        let registrar = dependenciesRegistrar
-        semaphore.signal()
-        
-        return registrar
+        return dependenciesRegistrar
     }
     
     var dependenciesRegistrarChangesPublisher: AnyPublisher<ChangeSet, Never> {
@@ -101,7 +94,7 @@ public final class DependencyContainer: Identifiable, Equatable {
     public init(
         @DependencyRegistrarBuilder dependencies: @escaping () -> DependenciesRegistrar
     ) {
-        self.dependenciesRegistrar = dependencies()
+        self.dependenciesRegistrar = DependenciesRegistrar()
         self.dependenciesRegistrarProvider = { dependencies() }
         
         postInit()
@@ -114,9 +107,9 @@ public final class DependencyContainer: Identifiable, Equatable {
         merging containers: SomeSequence
     ) where SomeSequence.Element == DependencyContainer {
         let dependencies: () -> DependenciesRegistrar = {
-            containers.reduce(DependenciesRegistrar()) { partialResult, container in
-                partialResult.union(container.dependenciesRegistrar)
-            }
+            DependenciesRegistrar(
+                reducing: containers.map(\.dependenciesRegistrar)
+            )
         }
         
         self.dependenciesRegistrar = dependencies()
@@ -148,7 +141,6 @@ public final class DependencyContainer: Identifiable, Equatable {
     
     private func startObservingChanges() {
 #if canImport(Observation)
-        
         if #available(macOS 14.0, iOS 17.0, watchOS 10.0, tvOS 17.0, *) {
             let undecoratedDependenciesRegistrarProvider = dependenciesRegistrarProvider
             self.dependenciesRegistrarProvider = {
@@ -158,10 +150,10 @@ public final class DependencyContainer: Identifiable, Equatable {
                     self?.invalidateDependenciesSubject.send()
                 }
             }
-            
-            invalidateDependenciesRegistrar(publishChanges: false)
         }
 #endif
+        
+        invalidateDependenciesRegistrar(publishChanges: false)
     }
     
     private func subscribeForChanges<SomeSequence: Sequence>(
@@ -174,13 +166,10 @@ public final class DependencyContainer: Identifiable, Equatable {
     
     func dependecyRegistrations(
         matching proposal: DependencyLocator.MatchProposal
-    ) -> [RawDependencyRegistration] {
+    ) -> Set<RawDependencyRegistration> {
         
-        semaphore.wait()
         let registrar = dependenciesRegistrar
-        semaphore.signal()
-        
-        return registrar.filter({ $0.locator == proposal })
+        return registrar.registrations(matching: proposal)
     }
     
     /// Modifies this container so that it dependency registrations provider closure will be invalidated when the given publisher fires.
@@ -203,14 +192,9 @@ public final class DependencyContainer: Identifiable, Equatable {
     
     private func invalidateDependenciesRegistrar(publishChanges: Bool = true) {
         let newValue = dependenciesRegistrarProvider()
-        
-        semaphore.wait()
-        
         let oldValue = dependenciesRegistrar
         self.dependenciesRegistrar = newValue
-        
-        semaphore.signal()
-        
+                
         guard publishChanges else {
             return
         }

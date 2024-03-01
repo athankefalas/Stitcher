@@ -9,25 +9,26 @@ import Foundation
 
 @resultBuilder
 public struct DependencyRegistrarBuilder {
-    public typealias Output = DependencyContainer.DependenciesRegistrar
+    public typealias Output = DependenciesRegistrar
+    public typealias IntermediateResult = Array<RawDependencyRegistration>
     
     public static func buildBlock(
-        _ components: Output...
-    ) -> Output {
-        
-        return Output(
-            components
-                .reduce(Output()) { partialResult, current in
-                    return partialResult.union(current)
-                }
-        )
+        _ components: IntermediateResult...
+    ) -> IntermediateResult {
+
+        return components
+            .reduce(IntermediateResult()) { partialResult, current in
+                var partialResult = partialResult
+                partialResult.append(contentsOf: current)
+                return partialResult
+            }
     }
     
     public static func buildExpression<T, Trait: DependencyLocatorTrait>(
         _ expression: Dependency<T, Trait>
-    ) -> Output {
+    ) -> IntermediateResult {
         
-        return Output([RawDependencyRegistration(expression)])
+        return IntermediateResult([RawDependencyRegistration(expression)])
     }
     
     @available(
@@ -37,69 +38,77 @@ public struct DependencyRegistrarBuilder {
     )
     public static func buildExpression<T, Trait: DependencyLocatorTrait>(
         _ expression: Dependency<Optional<T>, Trait>
-    ) -> Output {
+    ) -> IntermediateResult {
         
-        return Output([RawDependencyRegistration(expression)])
+        return IntermediateResult([RawDependencyRegistration(expression)])
     }
     
     
     public static func buildExpression(
         _ expression: DependencyGroup
-    ) -> Output {
+    ) -> IntermediateResult {
         
-        return expression.dependencies()
+        return expression
+            .dependencies()
+            .toArray()
     }
     
     
     public static func buildExpression<DependencyRepresentation: DependencyRepresenting>(
         _ expression: DependencyRepresentation
-    ) -> Output {
+    ) -> IntermediateResult {
         
-        return Output([RawDependencyRegistration(expression)])
+        return IntermediateResult([RawDependencyRegistration(expression)])
     }
     
     static func buildExpression<DependencyGroupRepresentation: DependencyGroupRepresenting>(
         _ expression: DependencyGroupRepresentation
-    ) -> Output {
+    ) -> IntermediateResult {
         
-        return expression.dependencies()
+        return expression
+            .dependencies()
+            .toArray()
     }
     
     @_disfavoredOverload
     public static func buildExpression<T>(
         _ expression: @escaping @Sendable @autoclosure () -> T
-    ) -> Output {
+    ) -> IntermediateResult {
         
         let dependency = Dependency(dependecy: expression)
-        return Output([RawDependencyRegistration(dependency)])
+        return IntermediateResult([RawDependencyRegistration(dependency)])
     }
     
     
     public static func buildEither(
-        first component: Output
-    ) -> Output {
+        first component: IntermediateResult
+    ) -> IntermediateResult {
         
         return component
     }
     
     public static func buildEither(
-        second component: Output
-    ) -> Output {
+        second component: IntermediateResult
+    ) -> IntermediateResult {
         
         return component
     }
     
     public static func buildOptional(
-        _ component: Output?
-    ) -> Output {
+        _ component: IntermediateResult?
+    ) -> IntermediateResult {
         
         return component ?? []
     }
     
     public static func buildExpression(
-        _ expression: Output
-    ) -> Output {
+        _ expression: IntermediateResult
+    ) -> IntermediateResult {
         
         return expression
+    }
+    
+    public static func buildFinalResult(_ component: IntermediateResult) -> Output {
+        Output(component)
     }
 }

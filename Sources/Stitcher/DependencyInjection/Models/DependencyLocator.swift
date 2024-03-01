@@ -52,6 +52,10 @@ public struct DependencyLocator: Hashable {
             )
         }
         
+        func indexingKey() -> IndexingKey {
+            IndexingKey(consuming: kind, wrappedValue)
+        }
+        
         func matchesName(_ name: String) -> Bool {
             guard kind == .nameLocator,
                   let proposedName = wrappedValue as? String else {
@@ -79,15 +83,16 @@ public struct DependencyLocator: Hashable {
         }
     }
     
-    enum Kind: Hashable {
-        case typeLocator
+    enum Kind: Int, Hashable {
         case nameLocator
+        case typeLocator
         case valueLocator
     }
     
     private let kind: Kind
     private let signature: AnyHashable
     private let predicate: Predicate
+    private let indexingkeys: Set<IndexingKey>
     
     private init(
         kind: Kind,
@@ -97,6 +102,14 @@ public struct DependencyLocator: Hashable {
         self.kind = kind
         self.signature = signature
         self.predicate = predicate
+        
+        if kind == .typeLocator,
+           let types = signature as? [TypeName] {
+            
+            self.indexingkeys = Set(types.map({ IndexingKey(consuming: kind, $0) }))
+        } else {
+            self.indexingkeys = [IndexingKey(consuming: kind, signature)]
+        }
     }
     
     func addingSupertype<Supertype>(_ supertype: Supertype.Type) -> DependencyLocator? {
@@ -115,29 +128,25 @@ public struct DependencyLocator: Hashable {
     }
     
     func dependencyContext() -> InjectionError.DependencyContext {
-        switch self.kind {
-        case .typeLocator:
-            let types = (signature as? [TypeName]) ?? []
-            return .type(types.first?.canonicalValue ?? "")
+        switch kind {
         case .nameLocator:
             let name = signature as? String ?? ""
             return .name(name)
+        case .typeLocator:
+            let types = (signature as? [TypeName]) ?? []
+            return .type(types.first?.canonicalValue ?? "")
         case .valueLocator:
             return .value(signature)
         }
     }
     
+    func indexingKeys() -> Set<IndexingKey> {
+        return indexingkeys
+    }
+    
     public func hash(into hasher: inout Hasher) {
         hasher.combine(kind)
         hasher.combine(signature)
-    }
-    
-    public static func == (lhs: DependencyLocator, rhs: DependencyLocator) -> Bool {
-        lhs.kind == rhs.kind && lhs.signature == rhs.signature
-    }
-    
-    static func == (lhs: DependencyLocator, rhs: DependencyLocator.MatchProposal) -> Bool {
-        lhs.predicate(rhs)
     }
     
     // MARK: Factory Methods
@@ -206,5 +215,19 @@ public struct DependencyLocator: Hashable {
         DependencyLocator(kind: .valueLocator, signature: value) { proposal in
             proposal.matchesValue(value)
         }
+    }
+    
+    // MARK: Equatable
+    
+    public static func == (lhs: DependencyLocator, rhs: DependencyLocator) -> Bool {
+        lhs.kind == rhs.kind && lhs.signature == rhs.signature
+    }
+    
+    static func == (lhs: DependencyLocator, rhs: DependencyLocator.MatchProposal) -> Bool {
+        lhs.predicate(rhs)
+    }
+    
+    static func == (lhs: DependencyLocator.MatchProposal, rhs: DependencyLocator) -> Bool {
+        rhs.predicate(lhs)
     }
 }

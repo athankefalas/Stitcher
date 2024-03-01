@@ -10,25 +10,18 @@ import Foundation
 
 struct RepeatDependencies: DependencyGroupRepresenting {
     
-    private let dependenciesRegistrarProvider: () -> DependencyContainer.DependenciesRegistrar
+    private let dependenciesRegistrar: DependenciesRegistrar
     
     init<S: Sequence>(
         for sequence: S,
-        @DependencyRegistrarBuilder dependencies: @escaping (S.Element) -> DependencyContainer.DependenciesRegistrar
+        @DependencyRegistrarBuilder dependencies: @escaping (S.Element) -> DependenciesRegistrar
     ) {
-        self.dependenciesRegistrarProvider = {
-            var registrar = DependencyContainer.DependenciesRegistrar()
-            
-            for element in sequence {
-                let dependencies = dependencies(element)
-                registrar.formUnion(dependencies)
-            }
-            
-            return registrar
-        }
+        self.dependenciesRegistrar = DependenciesRegistrar(
+            reducing: sequence.map({ dependencies($0) })
+        )
     }
     
-    func dependencies() -> Stitcher.DependencyContainer.DependenciesRegistrar {
-        dependenciesRegistrarProvider()
+    func dependencies() -> DependenciesRegistrar {
+        dependenciesRegistrar
     }
 }

@@ -9,5 +9,5 @@ import Foundation
 
 protocol DependencyGroupRepresenting {
     
-    func dependencies() -> DependencyContainer.DependenciesRegistrar
+    func dependencies() -> DependenciesRegistrar
 }

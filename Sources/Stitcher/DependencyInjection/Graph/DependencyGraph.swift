@@ -13,13 +13,10 @@ import OrderedCollections
 public enum DependencyGraph {
     
     @Atomic
-    private static var activeContainers: OrderedDictionary<AnyHashable, DependencyContainer> = [:]
+    private static var activeContainers: OrderedDictionary<AnyHashable, IndexedDependencyContainer> = [:]
     
     @Atomic
     private static var storage: [InstanceStorageKey : AnyInstanceStorage] = [:]
-    
-    @Atomic
-    private static var registrationCache: [DependencyLocator.MatchProposal : OrderedSet<RawDependencyRegistration>] = [:]
     
     @Atomic
     private static var subscriptions: [AnyHashable : AnyCancellable] = [:]
@@ -39,8 +36,6 @@ public enum DependencyGraph {
         _ container: DependencyContainer
     ) {
         
-        registrationCache.removeAll()
-        
         let id = container.id
         subscriptions[id] = container.dependenciesRegistrarChangesPublisher
             .sink { changes in
@@ -50,7 +45,7 @@ public enum DependencyGraph {
                 )
             }
         
-        activeContainers[id] = container
+        activeContainers[id] = IndexedDependencyContainer(container: container)
         
         initializeEagerDependencies(
             containerId: id,
@@ -70,7 +65,7 @@ public enum DependencyGraph {
             return
         }
         
-        registrationCache.removeAll()
+        activeContainers[container.id]?.deactivate()
         activeContainers.removeValue(forKey: container.id)
         
         for dependencyRegistration in container.registrar {
@@ -84,9 +79,7 @@ public enum DependencyGraph {
         id: DependencyContainer.ID,
         changedWith changes: DependencyContainer.ChangeSet
     ) {
-        
-        registrationCache.removeAll()
-        
+                
         for dependencyRegistration in changes.removedDependencies {
             removeInstanceStorage(for: dependencyRegistration)
         }
@@ -101,7 +94,7 @@ public enum DependencyGraph {
     
     private static func initializeEagerDependencies(
         containerId: AnyHashable,
-        registrar: DependencyContainer.DependenciesRegistrar
+        registrar: DependenciesRegistrar
     ) {
         
         for dependencyRegistration in registrar {
@@ -131,7 +124,7 @@ public enum DependencyGraph {
     static func dependencyRegistrations() -> [RawDependencyRegistration] {
         return activeContainers
             .values
-            .map({ $0.registrar })
+            .map({ $0.container.registrar })
             .reduce(OrderedSet<RawDependencyRegistration>()) { partialResult, containerRegistrar in
                 partialResult.union(containerRegistrar)
             }
@@ -142,17 +135,10 @@ public enum DependencyGraph {
         matching locator: DependencyLocator.MatchProposal
     ) -> OrderedSet<RawDependencyRegistration> {
         
-        if let cachedRegistrations = registrationCache[locator] {
-            return cachedRegistrations
-        }
-        
         let matchingRegistrations = activeContainers.values
             .flatMap({ $0.dependecyRegistrations(matching: locator) })
         
-        let distinctMatches = OrderedSet(matchingRegistrations)
-        registrationCache[locator] = distinctMatches
-        
-        return distinctMatches
+        return OrderedSet(matchingRegistrations)
     }
     
     @discardableResult
