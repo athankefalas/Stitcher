@@ -12,7 +12,7 @@ final class DependencyGraphPerformanceTests: XCTestCase {
 
     let range: ClosedRange<Int> = 1...100_000
 
-    func test_dependencyGraph_initialization() throws {
+    func test_dependencyGraph_initialization() async throws {
         let container = DependencyContainer {
             RepeatDependencies(for: self.range) { num in
                 Dependency {
@@ -22,14 +22,10 @@ final class DependencyGraphPerformanceTests: XCTestCase {
             }
         }
         
-//        measure { // Baseline: 100_000 @ 0.0139 s
-//            DependencyGraph.activate(container)
-//        }
-        
-        let start = Date()
-        DependencyGraph.activate(container)
-        let end = Date()
-        print("## Activated container in \(end.timeIntervalSince(start)).")
+        // Baseline: 100_000 @ 0,0000917 s,
+        measure {
+            DependencyGraph.activate(container)
+        }
         
         DependencyGraph.deactivate(container)
     }
@@ -47,14 +43,24 @@ final class DependencyGraphPerformanceTests: XCTestCase {
         DependencyGraph.activate(container)
         let num = Int.random(in: range)
         
-        await delay(0.5)
+        await delay(0.35)
         
-        measure { // Baseline: 100_000 @ 0,0819 s
+        // Baseline: 100_000 @ 0,000243 s
+        measure {
             let dependency: One? = try? DependencyGraph.injectDependency(byName: "D\(num)")
             XCTAssertNotNil(dependency)
         }
         
         DependencyGraph.deactivate(container)
+    }
+    
+    func trackingTime<R>(for operation: String, _ block: () -> R) -> R {
+        let start = Date()
+        let result = block()
+        let end = Date()
+        print("## Did \(operation) in \(end.timeIntervalSince(start)) seconds.")
+        
+        return result
     }
     
     func delay(_ delayInterval: TimeInterval) async {

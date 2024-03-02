@@ -10,16 +10,24 @@ import Foundation
 @resultBuilder
 public struct DependencyRegistrarBuilder {
     public typealias Output = DependenciesRegistrar
-    public typealias IntermediateResult = Array<RawDependencyRegistration>
+    public typealias IntermediateResult = Set<RawDependencyRegistration>
     
     public static func buildBlock(
         _ components: IntermediateResult...
     ) -> IntermediateResult {
-
+        
+        if components.isEmpty {
+            return IntermediateResult()
+        }
+        
+        if components.count == 1 {
+            return components[0]
+        }
+        
         return components
             .reduce(IntermediateResult()) { partialResult, current in
                 var partialResult = partialResult
-                partialResult.append(contentsOf: current)
+                partialResult.formUnion(current)
                 return partialResult
             }
     }
@@ -48,9 +56,7 @@ public struct DependencyRegistrarBuilder {
         _ expression: DependencyGroup
     ) -> IntermediateResult {
         
-        return expression
-            .dependencies()
-            .toArray()
+        return expression.dependencies()
     }
     
     
@@ -65,9 +71,7 @@ public struct DependencyRegistrarBuilder {
         _ expression: DependencyGroupRepresentation
     ) -> IntermediateResult {
         
-        return expression
-            .dependencies()
-            .toArray()
+        return expression.dependencies()
     }
     
     @_disfavoredOverload
@@ -109,6 +113,6 @@ public struct DependencyRegistrarBuilder {
     }
     
     public static func buildFinalResult(_ component: IntermediateResult) -> Output {
-        Output(component)
+        component
     }
 }

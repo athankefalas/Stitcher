@@ -13,10 +13,18 @@ public typealias DependenciesRegistrar = Set<RawDependencyRegistration>
 
 extension Set<RawDependencyRegistration> {
     
-    public init<Registrars: Sequence>(
+    public init<Registrars: Collection>(
         reducing sequence: Registrars
     ) where Registrars.Element == Self {
-        self.init(sequence.flatMap({ $0 }))
+        var result = Self(minimumCapacity: sequence.count)
+        
+        for registrar in sequence {
+            for element in registrar {
+                result.insert(element)
+            }
+        }
+        
+        self = result
     }
     
     func registrations(

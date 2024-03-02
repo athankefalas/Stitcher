@@ -197,8 +197,18 @@ final class DependencyScopeAndEagernessTests: XCTestCase {
     
     // Eagerness
     
-    func test_eagerDependencyInstantiates() throws {
+    func test_eagerDependencyInstantiates() async throws {
+        await delay(0.01)
+        
         XCTAssert(Self.eagerSharedDependencyInitCount == 0)
         XCTAssert(Self.eagerSingletonDependencyInitCount == 1)
+    }
+    
+    func delay(_ delayInterval: TimeInterval) async {
+        await withCheckedContinuation { continuation in
+            DispatchQueue.main.asyncAfter(deadline: .now() + delayInterval) {
+                continuation.resume()
+            }
+        }
     }
 }

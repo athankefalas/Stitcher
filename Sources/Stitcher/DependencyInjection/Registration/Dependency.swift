@@ -48,7 +48,7 @@ import Foundation
 /// .associated(with: someHashableValue)
 ///
 /// ```
-public struct Dependency<T, LocatorTrait: DependencyLocatorTrait>: Hashable {
+public struct Dependency<T, LocatorTrait: DependencyLocatorTrait> {
     
     private(set) var locator: DependencyLocator
     private(set) var factory: DependencyFactory

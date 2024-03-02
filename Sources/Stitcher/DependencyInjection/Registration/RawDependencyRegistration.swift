@@ -15,6 +15,7 @@ public struct RawDependencyRegistration: Hashable {
         let factory: DependencyFactory
         let scope: DependencyScope
         let eagerness: DependencyEagerness
+        let canInstantiateEagerly: Bool
         
         let signature: AnyHashable
         
@@ -27,6 +28,7 @@ public struct RawDependencyRegistration: Hashable {
             self.factory = factory
             self.scope = scope
             self.eagerness = eagerness
+            self.canInstantiateEagerly = eagerness == .eager && scope != .instance && factory.parameters == .none
             
             var hasher = Hasher()
             hasher.combine(locator)
@@ -54,6 +56,10 @@ public struct RawDependencyRegistration: Hashable {
     
     var eagerness: DependencyEagerness {
         _storageBox.eagerness
+    }
+    
+    var canInstantiateEagerly: Bool {
+        return _storageBox.canInstantiateEagerly
     }
     
     init(

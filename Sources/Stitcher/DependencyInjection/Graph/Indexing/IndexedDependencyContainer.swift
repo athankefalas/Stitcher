@@ -22,12 +22,17 @@ class IndexedDependencyContainer {
     private var registrationIndex: [AnyHashable : OrderedSet<RawDependencyRegistration>] = [:]
     
     let container: DependencyContainer
+    let lazyInitializationHandler: (RawDependencyRegistration) -> Void
     private var subscriptions: Set<AnyCancellable> = []
     
-    init(container: DependencyContainer) {
+    init(
+        container: DependencyContainer,
+        lazyInitializationHandler: @escaping (RawDependencyRegistration) -> Void
+    ) {
         self.updateTime = Date()
         self.indexing = true
         self.container = container
+        self.lazyInitializationHandler = lazyInitializationHandler
         
         postInit()
     }
@@ -60,8 +65,6 @@ class IndexedDependencyContainer {
             indexing = false
         }
         
-        let start = Date()
-        
         registrationIndex.removeAll()
         let registrar = container.registrar
         var registrationIndex = registrationIndex
@@ -78,11 +81,15 @@ class IndexedDependencyContainer {
                 
                 registrationIndex[key] = values
             }
+            
+            guard registration.canInstantiateEagerly else {
+                continue
+            }
+            
+            self.lazyInitializationHandler(registration)
         }
         
         self.registrationIndex = registrationIndex
-        let end = Date()
-        print("## Indexed container in \(end.timeIntervalSince(start)) seconds.")
     }
     
     private func containerDidChange(_ changes: DependencyContainer.ChangeSet) {
@@ -144,6 +151,12 @@ class IndexedDependencyContainer {
                 
                 registrationIndex[key] = values
             }
+            
+            guard registration.canInstantiateEagerly else {
+                continue
+            }
+            
+            self.lazyInitializationHandler(registration)
         }
         
         if updateTime > time {

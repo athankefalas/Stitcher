@@ -16,7 +16,7 @@ public enum DependencyGraph {
     private static var activeContainers: OrderedDictionary<AnyHashable, IndexedDependencyContainer> = [:]
     
     @Atomic
-    private static var storage: [InstanceStorageKey : AnyInstanceStorage] = [:]
+    private static var instanceStorage: [InstanceStorageKey : AnyInstanceStorage] = [:]
     
     @Atomic
     private static var subscriptions: [AnyHashable : AnyCancellable] = [:]
@@ -45,11 +45,9 @@ public enum DependencyGraph {
                 )
             }
         
-        activeContainers[id] = IndexedDependencyContainer(container: container)
-        
-        initializeEagerDependencies(
-            containerId: id,
-            registrar: container.registrar
+        activeContainers[id] = IndexedDependencyContainer(
+            container: container,
+            lazyInitializationHandler: initializeLazyDependency(registration:)
         )
         
         graphChangedSubject.send()
@@ -84,30 +82,19 @@ public enum DependencyGraph {
             removeInstanceStorage(for: dependencyRegistration)
         }
         
-        initializeEagerDependencies(
-            containerId: id,
-            registrar: changes.insertedDependencies
-        )
-        
         graphChangedSubject.send()
     }
     
-    private static func initializeEagerDependencies(
-        containerId: AnyHashable,
-        registrar: DependenciesRegistrar
+    private static func initializeLazyDependency(
+        registration: RawDependencyRegistration
     ) {
-        
-        for dependencyRegistration in registrar {
-            
-            guard dependencyRegistration.eagerness == .eager,
-                  dependencyRegistration.factory.parameters == .none else {
-                continue
-            }
-            
-            do {
-                try instantiateDependency(from: dependencyRegistration)
-            } catch { /* Ignored Error */ }
+        guard registration.canInstantiateEagerly else {
+            return
         }
+        
+        do {
+            try instantiateDependency(from: registration)
+        } catch { /* Ignored Error */ }
     }
     
     private static func removeInstanceStorage(
@@ -118,7 +105,7 @@ public enum DependencyGraph {
             instanceLocator: registration.locator
         )
         
-        storage.removeValue(forKey: storageKey)
+        instanceStorage.removeValue(forKey: storageKey)
     }
     
     static func dependencyRegistrations() -> [RawDependencyRegistration] {
@@ -152,7 +139,7 @@ public enum DependencyGraph {
             instanceLocator: registration.locator
         )
         
-        if let existingInstance = storage[storageKey]?.value {
+        if let existingInstance = instanceStorage[storageKey]?.value {
             return existingInstance
         }
         
@@ -167,7 +154,7 @@ public enum DependencyGraph {
                 scope: registration.scope
             )
             
-            self.storage[storageKey] = instanceStorage
+            self.instanceStorage[storageKey] = instanceStorage
             return instance
         } catch {
             
