@@ -22,12 +22,38 @@ final class DependencyGraphPerformanceTests: XCTestCase {
             }
         }
         
-        // Baseline: 100_000 @ 0,0000917 s,
+        // Baseline: 100_000 @ 0,000137 s
         measure {
             DependencyGraph.activate(container)
         }
         
         DependencyGraph.deactivate(container)
+    }
+    
+    func test_dependencyGraph_indexing() async {
+        let container = DependencyContainer {
+            RepeatDependencies(for: self.range) { num in
+                Dependency {
+                    One()
+                }
+                .named("D\(num)")
+            }
+        }
+        
+        measure { // Baseline: 100_000 @ 0,369 s
+            let expectation = XCTestExpectation()
+            let indexedContainer = IndexedDependencyContainer(
+                container: container,
+                lazyInitializationHandler: {_ in }
+            )
+            
+            Task {
+                await self.backoff(until: !indexedContainer.indexing)
+                expectation.fulfill()
+            }
+            
+            wait(for: [expectation])
+        }
     }
     
     func test_dependencyGraph_lookup() async throws {
@@ -54,9 +80,24 @@ final class DependencyGraphPerformanceTests: XCTestCase {
         DependencyGraph.deactivate(container)
     }
     
-    func trackingTime<R>(for operation: String, _ block: () -> R) -> R {
+    func trackingTime<R>(
+        for operation: String = "complete",
+        _ block: () -> R
+    ) -> R {
         let start = Date()
         let result = block()
+        let end = Date()
+        print("## Did \(operation) in \(end.timeIntervalSince(start)) seconds.")
+        
+        return result
+    }
+    
+    func trackingTime<R>(
+        for operation: String = "complete",
+        _ block: () async -> R
+    ) async -> R {
+        let start = Date()
+        let result = await block()
         let end = Date()
         print("## Did \(operation) in \(end.timeIntervalSince(start)) seconds.")
         
@@ -68,6 +109,20 @@ final class DependencyGraphPerformanceTests: XCTestCase {
             DispatchQueue.main.asyncAfter(deadline: .now() + delayInterval) {
                 continuation.resume()
             }
+        }
+    }
+    
+    func backoff(
+        for delayInterval: TimeInterval = 0.1,
+        until condition: @escaping @autoclosure () -> Bool
+    ) async {
+        
+        let increment = delayInterval
+        var delayInterval = delayInterval
+        
+        while !condition() {
+            await delay(delayInterval)
+            delayInterval += increment
         }
     }
 }

@@ -13,28 +13,58 @@ import OrderedCollections
 class IndexedDependencyContainer {
     
     @Atomic
-    private var indexing: Bool
+    private(set) var indexing: Bool
     
     @Atomic
     private var updateTime: Date
     
     @Atomic
-    private var registrationIndex: [AnyHashable : OrderedSet<RawDependencyRegistration>] = [:]
+    private var registrationIndex: Dictionary<AnyHashable, OrderedSet<RawDependencyRegistration>>
     
     let container: DependencyContainer
     let lazyInitializationHandler: (RawDependencyRegistration) -> Void
+    
+    private let configuration: StitcherConfiguration.Snapshot
     private var subscriptions: Set<AnyCancellable> = []
     
     init(
         container: DependencyContainer,
         lazyInitializationHandler: @escaping (RawDependencyRegistration) -> Void
     ) {
+        
+        let configuration = StitcherConfiguration.Snapshot()
+        
         self.updateTime = Date()
-        self.indexing = true
+        self.indexing = configuration.isIndexingEnabled
         self.container = container
+        self.configuration = configuration
+        self.registrationIndex = configuration.isIndexingEnabled ? Dictionary(
+            minimumCapacity: max(configuration.approximateDependencyCount, container.registrar.count)
+        ) : [:]
+        
         self.lazyInitializationHandler = lazyInitializationHandler
         
         postInit()
+    }
+    
+    init(
+        container: DependencyContainer,
+        lazyInitializationHandler: @escaping (RawDependencyRegistration) -> Void
+    ) async {
+        
+        let configuration = StitcherConfiguration.Snapshot()
+        
+        self.updateTime = Date()
+        self.indexing = configuration.isIndexingEnabled
+        self.container = container
+        self.configuration = configuration
+        self.registrationIndex = configuration.isIndexingEnabled ? Dictionary(
+            minimumCapacity: max(configuration.approximateDependencyCount, container.registrar.count)
+        ) : [:]
+        
+        self.lazyInitializationHandler = lazyInitializationHandler
+        
+        await postInit()
     }
     
     deinit {
@@ -42,10 +72,30 @@ class IndexedDependencyContainer {
     }
     
     private func postInit() {
-        observeContainerChanges()
-        
         Task(priority: .high) {
-            await startIndexing(at: updateTime)
+            await postInit()
+        }
+    }
+    
+    private func postInit() async {
+        
+        guard configuration.isIndexingEnabled else {
+            return initializeEagerDependenciesWithoutIndexing()
+        }
+        
+        observeContainerChanges()
+        await startIndexing(at: updateTime)
+    }
+    
+    private func initializeEagerDependenciesWithoutIndexing() {
+        let registrar = container.registrar
+        
+        for registration in registrar {
+            guard registration.canInstantiateEagerly else {
+                continue
+            }
+            
+            self.lazyInitializationHandler(registration)
         }
     }
     
@@ -65,7 +115,7 @@ class IndexedDependencyContainer {
             indexing = false
         }
         
-        registrationIndex.removeAll()
+        registrationIndex.removeAll(keepingCapacity: true)
         let registrar = container.registrar
         var registrationIndex = registrationIndex
         
@@ -76,7 +126,7 @@ class IndexedDependencyContainer {
             }
             
             for key in registration.locator.indexingKeys() {
-                var values = registrationIndex[key] ?? []
+                var values = registrationIndex[key] ?? OrderedSet()
                 values.append(registration)
                 
                 registrationIndex[key] = values
@@ -127,15 +177,17 @@ class IndexedDependencyContainer {
             }
             
             for key in removed.locator.indexingKeys() {
-                var values = registrationIndex[key] ?? []
-                values.remove(removed)
+                guard var values = registrationIndex[key] else {
+                    continue
+                }
                 
+                values.remove(removed)
                 registrationIndex[key] = values
             }
         }
         
         if updateTime > time {
-            self.registrationIndex.removeAll()
+            self.registrationIndex.removeAll(keepingCapacity: true)
             return
         }
         
@@ -146,9 +198,9 @@ class IndexedDependencyContainer {
             }
             
             for key in registration.locator.indexingKeys() {
-                var values = registrationIndex[key] ?? []
-                values.append(registration)
+                var values = registrationIndex[key] ?? OrderedSet()
                 
+                values.append(registration)
                 registrationIndex[key] = values
             }
             
@@ -160,7 +212,7 @@ class IndexedDependencyContainer {
         }
         
         if updateTime > time {
-            self.registrationIndex.removeAll()
+            self.registrationIndex.removeAll(keepingCapacity: true)
             return
         }
         
@@ -172,6 +224,7 @@ class IndexedDependencyContainer {
         updateTime = Date()
         subscriptions.forEach({ $0.cancel() })
         subscriptions.removeAll()
+        registrationIndex.removeAll()
     }
     
     // MARK: Find Registrations
@@ -185,7 +238,8 @@ class IndexedDependencyContainer {
         matching proposal: DependencyLocator.MatchProposal
     ) -> OrderedSet<RawDependencyRegistration> {
         
-        guard !indexing, !registrationIndex.isEmpty else {
+        guard configuration.isIndexingEnabled,
+              !indexing, !registrationIndex.isEmpty else {
             return findDependecyRegistrations(matching: proposal)
         }
         
