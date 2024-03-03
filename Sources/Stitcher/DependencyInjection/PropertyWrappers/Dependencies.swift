@@ -25,9 +25,10 @@ import Foundation
 /// }
 /// ```
 ///
-/// - Note: This property wrapper should normally be used in your App struct or UIApplicationDelegate,
-/// which ties the defined dependencies to the lifetime of the app. However, the underlying container's lifetime
-/// can also be manually managed by using the `DependencyGraph` activate and deactivate methods.
+/// - Note: This property wrapper should normally be used near an application's or feature's
+/// entry point, such as the App struct or UIApplicationDelegate, and tie the defined dependencies
+/// to the lifetime of the app. However, the underlying container's lifetime can also be manually managed
+/// by using the `DependencyGraph` activate and deactivate methods.
 @propertyWrapper
 public struct Dependencies {
     
@@ -45,12 +46,22 @@ public struct Dependencies {
             
             DependencyGraph.deactivate(container)
             
-            defer {
-                DependencyGraph.activate(container)
-            }
-            
             container = newValue
+            DependencyGraph.activate(container)
         }
+    }
+    
+    /// Sets the managed dependency container waiting for activation **and** indexing.
+    /// - Parameter newValue: The new dependency container to activate.
+    public mutating func setContainer(_ newValue: DependencyContainer) async {
+        guard newValue !== container else {
+            return
+        }
+        
+        DependencyGraph.deactivate(container)
+        container = newValue
+        
+        await DependencyGraph.activate(container)
     }
     
     public init(wrappedValue: DependencyContainer = .empty) {

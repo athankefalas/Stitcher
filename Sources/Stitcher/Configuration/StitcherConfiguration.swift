@@ -71,9 +71,9 @@ public enum StitcherConfiguration {
     /// | Container Initialization | O(n^2)  | O(n) |
     /// | Dependency Search    | O(1) \*    | O(n) |
     ///
-    /// \* On average based on the way the dependency is located. For example adding type
+    /// \* On average based on the way the dependency is located. For example, adding type
     /// aliases such as protocol conformances can increase lookup times for the specific protocol.
-    /// However, it is highly unlikely that a dependency will be registred with more than 2 type aliases
+    /// However, as it is highly unlikely that a dependency will be registered with more than 2 type aliases,
     /// we can average the lookup time to O(1).
     @Atomic public static var isIndexingEnabled = true
     
