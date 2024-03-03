@@ -1,25 +1,22 @@
 # Stitcher
 
-Stitcher is a declarative library that helps to manage dependencies in Swift projects.
+Stitcher is a dependecy injection library for Swift projects.
 
 ## ⏱ Version History
 
 | Version | Changes                           |
 |---------|-----------------------------------|
-|0.9.1      | Pre-release.                      |
+| 0.9.1   | Pre-release.                      |
+| 1.0.0   | Initial release.                  |
 
 ## 🧰 Features
 
-- Verification of dependency containers at creation time using requirements.
-- Declare `Dependency` and `Requirement` values of a container in a declarative manner utilizing Swift's result builders.
-- Ability to compose multiple `DependencyContainer`s into a single system-wide unified dependency container.
-- Support for injecting instances by name or by type and the ability to use parameters when creating instances for injection.
-- Support for property and argument injection.
-- Support for injecting functions and properties.
-
-## 🛠 Experimental Features
-
-- Support for synthetic types with implementations created at runtime by injecting the proper dependencies.
+- Easy to setup.
+- Declarative API for registering dependencies, including conditional dependecny definition.
+- Scalable infrastructure using composition for modular projects.
+- Supports for injection by name, by type and by associated values.
+- Type safe initialization parameters for dependency initialization.
+- Support for indexing dependencies in order to minimize injection time.
 
 ## 📦 Installation
 
@@ -31,36 +28,55 @@ You may add Stitcher as a Swift Package dependency using Xcode 11.0 or later, by
 
 ### Manually 
 
-You may also install this framework manually by downloading the `Stitcher` project and including it in your project.
+You may also install this library manually by downloading the `Stitcher` project and including it in your project.
 
 ## ⚡️ Quick Start
 
-Using Stitcher you can declare a `DependencyContainer` with the dependencies it contains and activate it using the `DependencyGraph`. If there is a need to validate that a container contains a critical few (or all) required dependencies, these requirements can also be added to the container.
+Define dependencies in your App struct or your UIApplication delegate, by using the `@Depenendecies` property wrapper:
 
-```swift
-try DependencyGraph.activate {
-    DependencyContainer("Tutorial") {
-        Dependency("SomeDependency", SomeDependency.init)
-    } requires: {
-        Requirement(.name("SomeDependency"))
+``` swift
+
+    @Dependencies
+    private var container = DependencyContainer {
+        // Dependency with no parameters
+        AuthenticationService()
+        
+        // Dependency with parameters
+        Dependency { location in
+            ImageUploadService(targeting: location)
+        }
+        .scope(.instance)
+    }
+
+```
+
+Inject a dependency using the `@Injected` property wrapper:
+
+``` swift
+
+class LoginSceneViewModel: ObservableObject {
+    
+    @Injected
+    private var authenticationService: AuthenticationService
+    
+    func login(email: Email, password: Password) async {
+        await authenticationService.attemptLogin(email: email, password: Password)
     }
 }
-```
 
-The declared dependencies can be injected into properties using the `@Injected` property wrapper or by using the active `DependencyGraph`.
-
-```swift
-// Injection using the @Injected property wrapper
-class PropertyInjectionExample {
-    @Injected("name")
-    var dependency: SomeDependency
+class ProfileSceneViewModel: ObservableObject {
     
-    init() {}
+    @Injected(ImageUploadLocation.profileAvatar)
+    private var avatarUploadService: ImageUploadService
+    
+    func upload(image: UIImage) async {
+        await avatarUploadService.upload(image)
+    } 
 }
 
-// Injection using the active Dependency Graph
-let dependency: SomeDependency = try DependencyGraph.active.inject()
 ```
+
+
 
 ## 📋 Library Overview
 
