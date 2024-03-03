@@ -28,6 +28,10 @@ public enum DependencyGraph {
         graphChangedSubject.eraseToAnyPublisher()
     }
     
+    private static let storageCleaner = StorageCleaner {
+        releaseUnusedStorage()
+    }
+    
     // MARK: DependencyContainer Activation - Deactivation
     
     /// Activates the given dependency container
@@ -51,6 +55,31 @@ public enum DependencyGraph {
         )
         
         graphChangedSubject.send()
+        storageCleaner.didInstantiateDependency()
+    }
+    
+    /// Activates the given dependency container
+    /// - Parameter container: The dependency container to activate
+    public static func activate(
+        _ container: DependencyContainer
+    ) async {
+        
+        let id = container.id
+        subscriptions[id] = container.dependenciesRegistrarChangesPublisher
+            .sink { changes in
+                dependencyContainer(
+                    id: id,
+                    changedWith: changes
+                )
+            }
+        
+        activeContainers[id] = await IndexedDependencyContainer(
+            container: container,
+            lazyInitializationHandler: initializeLazyDependency(registration:)
+        )
+        
+        graphChangedSubject.send()
+        storageCleaner.didInstantiateDependency()
     }
     
     /// Deactivates the given dependency container
@@ -63,6 +92,9 @@ public enum DependencyGraph {
             return
         }
         
+        subscriptions[container.id]?.cancel()
+        subscriptions.removeValue(forKey: container.id)
+        
         activeContainers[container.id]?.deactivate()
         activeContainers.removeValue(forKey: container.id)
         
@@ -71,6 +103,33 @@ public enum DependencyGraph {
         }
         
         graphChangedSubject.send()
+    }
+    
+    /// Deactivates all active dependency containers
+    public static func deactivateAll() {
+        subscriptions.forEach({ $0.value.cancel() })
+        subscriptions.removeAll()
+        
+        activeContainers.forEach({ $0.value.deactivate() })
+        activeContainers.removeAll()
+        
+        instanceStorage.removeAll()
+        graphChangedSubject.send()
+    }
+    
+    public static func releaseUnusedStorage() {
+        Task {
+            let keys = Set(instanceStorage.keys)
+            
+            for key in keys {
+                guard let storage = instanceStorage[key],
+                      storage.isEmpty else {
+                    continue
+                }
+                
+                instanceStorage.removeValue(forKey: key)
+            }
+        }
     }
     
     private static func dependencyContainer(
@@ -141,6 +200,10 @@ public enum DependencyGraph {
         
         if let existingInstance = instanceStorage[storageKey]?.value {
             return existingInstance
+        }
+        
+        defer {
+            storageCleaner.didInstantiateDependency()
         }
         
         do {

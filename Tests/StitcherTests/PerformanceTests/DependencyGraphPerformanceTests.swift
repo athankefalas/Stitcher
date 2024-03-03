@@ -11,10 +11,15 @@ import XCTest
 final class DependencyGraphPerformanceTests: XCTestCase {
 
     let range: ClosedRange<Int> = 1...100_000
+    
+    override func setUp() {
+        StitcherConfiguration.isIndexingEnabled = true
+        StitcherConfiguration.approximateDependencyCount = range.upperBound
+    }
 
     func test_dependencyGraph_initialization() async throws {
         let container = DependencyContainer {
-            RepeatDependencies(for: self.range) { num in
+            RepeatDependency(for: self.range) { num in
                 Dependency {
                     One()
                 }
@@ -32,7 +37,7 @@ final class DependencyGraphPerformanceTests: XCTestCase {
     
     func test_dependencyGraph_indexing() async {
         let container = DependencyContainer {
-            RepeatDependencies(for: self.range) { num in
+            RepeatDependency(for: self.range) { num in
                 Dependency {
                     One()
                 }
@@ -58,7 +63,7 @@ final class DependencyGraphPerformanceTests: XCTestCase {
     
     func test_dependencyGraph_lookup() async throws {
         let container = DependencyContainer {
-            RepeatDependencies(for: self.range) { num in
+            RepeatDependency(for: self.range) { num in
                 Dependency {
                     One()
                 }
@@ -66,15 +71,12 @@ final class DependencyGraphPerformanceTests: XCTestCase {
             }
         }
         
-        DependencyGraph.activate(container)
+        await DependencyGraph.activate(container)
         let num = Int.random(in: range)
         
-        await delay(0.35)
-        
-        // Baseline: 100_000 @ 0,000243 s
+        // Baseline: 100_000 @ 0,0000877 s
         measure {
-            let dependency: One? = try? DependencyGraph.injectDependency(byName: "D\(num)")
-            XCTAssertNotNil(dependency)
+            let _: One = try! DependencyGraph.injectDependency(byName: "D\(num)")
         }
         
         DependencyGraph.deactivate(container)

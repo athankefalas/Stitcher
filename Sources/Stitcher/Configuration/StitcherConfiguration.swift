@@ -10,29 +10,71 @@ import Foundation
 /// A type that holds any configuration parameters for controlling the behaviour of sticher
 public enum StitcherConfiguration {
     
+    /// A type representing the frequency of automatic storage cleanup.
+    public struct AutoCleanupFrequency: RawRepresentable, ExpressibleByIntegerLiteral {
+        
+        /// An approximate count of discreet dependency injection requests, normalized to once per 0.01 seconds.
+        public let rawValue: Int
+        
+        private init() {
+            self.rawValue = -1
+        }
+        
+        public init(rawValue: Int) {
+            self.rawValue = rawValue >= 0 ? rawValue : -1
+        }
+        
+        public init(integerLiteral value: Int) {
+            self.init(rawValue: value)
+        }
+        
+        /// The storage will never be automatically cleaned.
+        public static let never = AutoCleanupFrequency()
+        
+        /// The storage will be automatically cleaned **once** per 10 normalized injection requests.
+        public static let veryLow = AutoCleanupFrequency(rawValue: 10)
+        
+        /// The storage will be automatically cleaned **once** per 6 normalized injection requests.
+        public static let low = AutoCleanupFrequency(rawValue: 6)
+        
+        /// The storage will be automatically cleaned **once** per 4 normalized injection requests.
+        public static let medium = AutoCleanupFrequency(rawValue: 4)
+        
+        /// The storage will be automatically cleaned **once** per 2 normalized injection requests.
+        public static let high = AutoCleanupFrequency(rawValue: 2)
+        
+        /// The storage will be automatically cleaned **once** per normalized injection request.
+        public static let veryHigh = AutoCleanupFrequency(rawValue: 1)
+    }
+    
     struct Snapshot {
         let isIndexingEnabled: Bool
         let approximateDependencyCount: Int
+        let autoCleanupFrequency: AutoCleanupFrequency
         
         init() {
             self.isIndexingEnabled = StitcherConfiguration.isIndexingEnabled
             self.approximateDependencyCount = max(StitcherConfiguration.approximateDependencyCount, 100)
+            self.autoCleanupFrequency = StitcherConfiguration.autoCleanupFrequency
         }
     }
     
-    /// Controls whether indexing is enabled.
-    /// 
+    /// Controls whether indexing dependencies is enabled.
+    ///
     /// When indexing is **disabled**, container initialization will be significantly faster,
     /// at the expense of dependency search operations during injection. Below is
     /// a table with the different time complexity values per operation based on whether
     /// indexing is enabled:
     /// 
-    /// |Operation | Complexity with Indexing enabled | Complexity with Indexing disabled |
+    /// | Operation | Complexity with Indexing enabled | Complexity with Indexing disabled |
     /// | - | - | - |
-    /// |Container Initialization | O(n^2)  | O(n) |
-    /// |Dependency Search    | O(1) \*    | O(n) |
-    /// 
-    /// \* On average based on the way the dependency is located.
+    /// | Container Initialization | O(n^2)  | O(n) |
+    /// | Dependency Search    | O(1) \*    | O(n) |
+    ///
+    /// \* On average based on the way the dependency is located. For example adding type
+    /// aliases such as protocol conformances can increase lookup times for the specific protocol.
+    /// However, it is highly unlikely that a dependency will be registred with more than 2 type aliases
+    /// we can average the lookup time to O(1).
     @Atomic public static var isIndexingEnabled = true
     
     /// An approximate count of the dependencies defined in the app.
@@ -75,8 +117,10 @@ public enum StitcherConfiguration {
     ///
     /// ```
     ///
-    /// - Warning: Avoid changing this value unecessarily as it can negatively impact runtimememory footprint and performance.
+    /// - Warning: Avoid changing this value unecessarily as it can negatively impact runtime memory footprint and performance.
     ///   Setting an arbitrarily high value may allocate a large portion of memory, while a low value can increase indexing time.
     @Atomic public static var approximateDependencyCount = 30_000
     
+    /// Controls the frequency at which the dependency graph instance storage will be automatically cleaned up.
+    @Atomic public static var autoCleanupFrequency = AutoCleanupFrequency.veryLow
 }

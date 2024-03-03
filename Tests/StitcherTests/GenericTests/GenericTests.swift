@@ -6,7 +6,7 @@
 //
 
 import XCTest
-import Stitcher
+@testable import Stitcher
 
 final class GenericTests: XCTestCase {
     
@@ -37,5 +37,26 @@ final class GenericTests: XCTestCase {
     func test_postInstantiationAware_isCalled() throws {
         @Injected var service: Service
         XCTAssert(service.isActive)
+    }
+    
+    func test_autoCleanup_isCalled() async {
+        XCTAssert(StorageCleaner.cleaupRequestsCount == 0)
+        
+        let count = max(1, StitcherConfiguration.autoCleanupFrequency.rawValue) + 1
+        
+        for _ in 1...count {
+            StorageCleaner.didInstantiateDependency()
+            await delay(0.01)
+        }
+        
+        XCTAssert(StorageCleaner.cleaupRequestsCount > 0)
+    }
+    
+    func delay(_ delayInterval: TimeInterval) async {
+        await withCheckedContinuation { continuation in
+            DispatchQueue.main.asyncAfter(deadline: .now() + delayInterval) {
+                continuation.resume()
+            }
+        }
     }
 }
