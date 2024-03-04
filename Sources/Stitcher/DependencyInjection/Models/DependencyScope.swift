@@ -57,8 +57,8 @@ public enum DependencyScope: Hashable {
     }
     
     @_disfavoredOverload
-    public static func tracking<P: Publisher>(
-        _ publisher: P
+    public static func managed<P: Publisher>(
+        by publisher: P
     ) -> Self
     where P.Failure == Never {
         return .managed(

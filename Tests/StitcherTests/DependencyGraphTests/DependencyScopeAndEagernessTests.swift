@@ -54,7 +54,7 @@ final class DependencyScopeAndEagernessTests: XCTestCase {
         Dependency {
             Delta()
         }
-        .scope(.tracking(invalidationSubject))
+        .scope(.managed(by: invalidationSubject))
         
         Dependency {
             One()
@@ -74,7 +74,7 @@ final class DependencyScopeAndEagernessTests: XCTestCase {
         Dependency {
             Four()
         }
-        .scope(.tracking(invalidationSubject))
+        .scope(.managed(by: invalidationSubject))
         
         Dependency {
             EagerSharedDependency()

@@ -13,10 +13,11 @@ Stitcher is a dependecy injection library for Swift projects.
 
 - Easy to setup.
 - Declarative API for registering dependencies, including conditional dependecny definition.
-- Scalable infrastructure using composition for modular projects.
+- Composable dependency management support for modular projects.
 - Supports for injection by name, by type and by associated values.
 - Type safe initialization parameters for dependency initialization.
 - Support for indexing dependencies in order to minimize injection time.
+- Dynamic cyclic dependency detection at runtime.
 
 ## 📦 Installation
 
@@ -76,6 +77,346 @@ class ProfileSceneViewModel: ObservableObject {
 
 ```
 
+## Dependency Container
+
+A `DependencyContainer` is a data structure that owns a set of dependencies. A container can be created by registering dependencies or by
+merging multiple other dependency containers. Dependencies can be registered in a container using a provider closure that builds the registrar of the container. The provider closure uses a result builder to compose the dependencies of a container, with support for conditional statements and grouping. The builder supports different types of components, with the most common being the `DependencyGroup` and `Dependency`.
+
+```swift
+
+DependencyContainer {
+
+    Dependency {
+        LocalStorageService()
+    }
+    
+    if AppModel.shared.isPrincipalPresent {
+        Dependency {
+            UserAccountService()
+        }
+    }
+    
+    DependencyGroup {
+    
+        Dependency {
+            AuthenticationService()
+        }
+        
+    }
+    .enabled(AppModel.shared.canUseAuthentication)
+
+}
+
+```
+
+In order to invalidate the contents of the dependency container, after a value changes, you can directly use properties of objects with the `@Observable` macro or instead use an `ObservableObject` or any publisher to manually invalidate them. Manual invalidation uses a pseudo-modifier method called invalidated.
+
+Manual invalidation of a container:
+
+``` swift
+
+// Invalidate the dependency container when the shared instance of AppModel changes:
+DependencyContainer {
+
+    if ObservableModel.shared.isLoggedIn {
+        Dependency {
+            LogoutService()
+        }
+    }
+
+}
+.invalidated(tracking: ObservableModel.shared)
+
+// Invalidate the dependency container when the authenticationStateChangedPublisher receives an event:
+
+DependencyContainer {
+
+    if ObservableModel.shared.isLoggedIn {
+        Dependency {
+            LogoutService()
+        }
+    }
+
+}
+.invalidated(tracking: authenticationStateChangedPublisher)
+
+```
+
+Dependency contaners are reference types, so the invalidation can be attached to any container as long as we have a reference to it,
+even if it is already activated or managed by the `@Dependencies` property wrapper. When using manual invalidation with observable 
+objects or publishers, please keep in mind that continously or frequently invalidating a dependency container can result in deteriorated performance.
+
+After defining a dependency container it has to be activated in order for the dependencies it contains to be available for injection. Activating
+a dependency container can be activated automatically if it is managed or manually if it is unmanaged.
+
+```swift
+
+// Activate a container
+DependencyGraph.activate(container)
+
+// Deactivate a container
+DependencyGraph.deactivate(container)
+
+```
+
+### Dependency Registration
+
+Dependencies can be registered by using the `Dependency` struct, a primitive component used to define a single dependency.
+Different initializers can be used to denote the way the dependency will be located, while modifying the scope and eagerness of the dependency
+can be achieved by using modifier-like methods on the dependency struct.
+
+In order to initialize the `Dependency` struct, at the very least a factory function must be provided which is used to instantiate the dependency.
+The function can have an arbitrary number of parameters and as the definition uses parameter packs under the hood, there is no
+concrete upper limit to the number of parameters.
+
+```swift
+
+Dependency {
+    Service()
+}
+
+Dependency { cache in
+    RemoteRepository(cachedBy: cache)
+}
+
+Dependency { firstParameter, secondParameter in
+    SomeService(firstParameter, secondParameter)
+}
+
+```
+
+Optional configuration parameters, such as setting the way the dependency is located, it's scope and it's eagerness will be discussed in the following sections.
+
+#### Register Dependencies By Name
+
+By default, dependencies are registered and located by their type. Alternatively, dependencies may also be located by a name, which can be
+any string value. If multiple dependencies are defined for the same name in the same container, the first one will be used and the rest will be discarded.
+
+```swift
+
+// Setting a name via initializer
+
+Dependency(named: "service") {
+    Service()
+}
+
+Dependency(named: "repository") { cache in
+    RemoteRepository(cachedBy: cache)
+}
+
+Dependency(named: "some-service") { firstParameter, secondParameter in
+    SomeService(firstParameter, secondParameter)
+}
+
+// Setting a name via modifier
+
+Dependency(named: "service") {
+    Service()
+}
+.named("service")
+
+Dependency { cache in
+    RemoteRepository(cachedBy: cache)
+}
+.named("repository")
+
+Dependency { firstParameter, secondParameter in
+    SomeService(firstParameter, secondParameter)
+}
+.named("some-service")
+
+```
+
+The name initializers and the the `named` dependency modifiers also have overloads that can be used with types that conform to
+either `RawRepresentable` or `CustomStringConvertible` in order to avoid using raw string values directly. In cases where the dependency
+must be located by name, but the name representing type is not easily covnertible to string, associated values may be used instead which
+require that the representation type conforms to `Hashable`.
+
+#### Register Dependencies By Type
+
+When using the `Dependency` struct by default the dependency is registered and located by it's type.
+However, sometimes it may be required to locate a dependency not by it's exact type, but by a protocol it conforms to, or a superclass it
+inherts from. Adding related type definitions to a dependency registration can be achieved by using the appropriate `Dependency` struct initializer
+or a modifier method.
+
+```swift
+
+// Setting a related type via initializer
+
+Dependency(conformingTo: ServiceProtocol.self) {
+    Service()
+}
+
+Dependency(inheritingFrom: ServiceSuperclass.self) {
+    Service()
+}
+
+// Setting a related type via modifier
+
+Dependency {
+    Service()
+}
+.conforms(to: ServiceProtocol.self)
+
+Dependency {
+    Service()
+}
+.inherits(from: ServiceSuperclass.self)
+
+```
+
+Adding a conformance or inheritance to a dependecy that is of an unrelated type, will produce a runtime error in DEBUG builds.
+
+#### Register Dependencies By Associated Value
+
+Similar to registering a dependency by name, a dependency can also be registered by an associated value. The associated value must conform to 
+the `Hashable` protocol. If multiple dependencies are defined for the same hashable value in the same container, the first one will be used and
+the rest will be discarded.
+
+```swift
+
+// Setting an associated value via initializer
+
+Dependency(for: Services.service) {
+    Service()
+}
+
+// Setting an associated value via modifier
+
+Dependency {
+    Service()
+}
+.associated(with: Services.service)
+
+```
+
+When using associated value located dependencies having a fast and collision free hashable implementation can make a significant difeerence in
+performance.
+
+#### Dependency Scope
+
+The scope of a dependency controls how it's lifetime is managed by the dependency graph once instantiated.
+The following four scopes are available:
+
+| Scope | Lifetime |
+| - | - |
+| Instance    | A different instance will be used every time is it injected. |
+| Shared      | The same instance of the dependency will be used every time is it injected, as long as there are strong references to it. |
+| Singleton   | The same instance of the dependency will be used every time is it injected. |
+| Managed     | The same instance of the dependency will be used every time is it injected, until the given publisher fires. |
+
+By default, the scope of a dependency is automatically resolved differently based on whether the type of the dependency is a value type or a reference
+type. The automatically scope selected for value types is `.instance` while for reference type `.shared` is used. Furthermore, as value types cannot be reference counted, using the `.shared` scope with a value type is equivalent to using the `.instance` scope.
+
+The scope of a dependency can be set using the `scope` dependency modifier:
+
+```swift
+
+Dependency {
+    SomeService()
+}
+.scope(.instance)
+
+Dependency {
+    EventTrackingService()
+}
+.scope(.shared)
+
+Dependency {
+    Repository()
+}
+.scope(.singleton)
+
+Dependency {
+    UserAccountManager()
+}
+.scope(.managed(by: principalChangedPublisher))
+
+```
+
+#### Dependency Eagerness
+
+By default, dependencies are lazily instantiated when first required for injection. There are some cases, such as a singleton event tracking
+service for example, that require the dependency to be instantiated when it's dependency container is activated in order to be able to receive events
+immediately. To enable this behaviour the `eagerness` dependency modifier can be used, so that the `DependencyGraph` will instantiate the dependency
+when the dependency container will be activated.
+
+```swift
+
+Dependency {
+    EventTracker()
+}
+.eagerness(.eager)
+
+```
+
+#### Dependency Groups
+
+As discussed in a previous section conditional dependency registrations can conditionally provide dependencies based on the state of the system.
+However, if several dependencies are conditionally enabled based on the same state it may be helpful to group them together and conditioanlly enable
+the entire group. A dependency group can be initialized by passing a provider closure that builds the registrar of the group.
+
+```swift
+
+DependencyContainer {
+
+    DependencyGroup {
+        
+        MotionDetectionService()
+        
+    }
+    .enabled(System.isGyroscopeSupported)
+
+}
+
+```
+
+Enabling or disabling a dependency group can be achieved using the `enabled` dependency group modifier.
+
+#### Other Registration Representations
+
+Other that using the `Dependency` and `DependencyGroup` structs while building dependency containers two more components can be used to register dependencies.
+
+#### Managed VS Unmanaged Containers
+
+## Dependency Graph
+
+### Automatic Injection
+
+Name
+Simple types / protocol / superclass, optional type, collections
+Value
+
+### Manual Injection
+
+Name
+Simple types / protocol / superclass, optional type, collections
+Value
+
+### Dependency Cycles
+
+// cycle detection and avoidance
+
+## Interoperabilty
+
+// aware protocol, graphChangedPublisher, autoreloading
+
+
+
+
+////
+
+Topics:
+
+DependencyContainer
+
+Registration by name, by type, by value
+
+DependncyGraph
+
+Inject by name, by type, by value
+
+Configuration
 
 
 ## 📋 Library Overview
