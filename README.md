@@ -37,17 +37,17 @@ Define dependencies in your App struct or your UIApplication delegate, by using 
 
 ``` swift
 
-    @Dependencies
-    private var container = DependencyContainer {
-        // Dependency with no parameters
-        AuthenticationService()
-        
-        // Dependency with parameters
-        Dependency { location in
-            ImageUploadService(targeting: location)
-        }
-        .scope(.instance)
+@Dependencies
+private var container = DependencyContainer {
+    // Dependency with no parameters
+    AuthenticationService()
+    
+    // Dependency with parameters
+    Dependency { location in
+        ImageUploadService(targeting: location)
     }
+    .scope(.instance)
+}
 
 ```
 
@@ -146,15 +146,33 @@ Dependency contaners are reference types, so the invalidation can be attached to
 even if it is already activated or managed by the `@Dependencies` property wrapper. When using manual invalidation with observable 
 objects or publishers, please keep in mind that continously or frequently invalidating a dependency container can result in deteriorated performance.
 
-After defining a dependency container it has to be activated in order for the dependencies it contains to be available for injection. Activating
-a dependency container can be activated automatically if it is managed or manually if it is unmanaged.
+After defining a dependency container it has to be activated in order for the dependencies it contains to be available for injection. Managed
+dependency containers have their lifetime automatically managed, while unmanaged containers must manually manage their activation and
+deactivation. 
+
+Managed dependency containers can be defined by using the `@Dependencies` property wrapper and will be active as long as the wrapped property is
+not deallocated. Changing the value of the property will deactivate the old value and activate the new one. Creating a manage container simply
+requires wrapping a dependency container using the property wrapper:
 
 ```swift
 
-// Activate a container
+@Dependencies
+var container = DependencyContainer {}
+
+```
+
+Unmanaged containers are dependency containers that are defined without using the `@Dependencies` property wrapper. After defining an unmanaged
+container, it has to be activated manually by using the activation / deactivation methods defined in `DependencyGraph`. Deactivation must be also be
+manually managed, especially if the container has a very specific lifetime, for example it should be active only while a user is not logged in.
+
+```swift
+
+let container = DependencyContainer {}
+
+// Manually activate a container
 DependencyGraph.activate(container)
 
-// Deactivate a container
+// Manually deactivate a container
 DependencyGraph.deactivate(container)
 
 ```
@@ -375,11 +393,66 @@ Enabling or disabling a dependency group can be achieved using the `enabled` dep
 
 #### Other Registration Representations
 
-Other that using the `Dependency` and `DependencyGroup` structs while building dependency containers two more components can be used to register dependencies.
+Other that using the `Dependency` and `DependencyGroup` structs while building dependency containers, two more components that are representations of
+registrations can be used to register dependencies. 
 
-#### Managed VS Unmanaged Containers
+##### Autoclosure Registration Component
+
+The first registration representing component are provider autoclosures, which can be used as a convenience for registering type located dependencies with zero
+parameter initializers.
+
+```swift
+
+DependencyContainer {
+    
+    SomeService()
+    
+    Dependency {
+        SomeService()
+    }
+
+}
+
+```
+
+The two registrations above are equivalent. The autoclosure from the first dependency **will not be invoked** when the provider closure is evaluated,
+but when the dependency is instantiated by the dependency graph.
+
+##### DependencyRepresenting Registration Component
+
+Completely custom dependency registration types can also be used with a dependency container. The custom registration type must conform to the
+`DependencyRepresenting` protocol. The protocol has four requirements to define the characteristics of the dependency, three of them are optional
+and define the dependency locator, scope and eagerness. The fourth requirement is a property called `dependencyProvider`, which must provide a function
+that will be used to instantiate the dependency.
+
+### Multiple Dependency Containers
+
+In modular applications, it is possible to have different portions of the system segregated to smaller subsystems. In order to support this paradigm,
+it is possible to use multiple dependency containers, either by having multiple (managed or unmanaged) containers active at the same time, or by
+merging each subsystem container into a composite dependency container.
+
+```swift
+
+let containers: [DependencyContainer] = makeContainers()
+let container = DependencyContainer(merging: containers)
+
+```
+
+Please note that the merged containers are strongly retained by the composite dependency cotnainer in order to correctly propagate observations.
 
 ## Dependency Graph
+
+The dependency graph represents a composite of all active dependency containers along with additional storage to store dependency instances.
+Furthermore, it is responsible for handling the activation, indexing and deactivation of dependency containers. 
+
+Upon activating a dependency container, and depending on the options defined in `StitcherConfiguration` the dependency graph can index the registrar
+of a container in order to minimize the search time for dependencies during injection. During indexing, any eager dependencies are instantiated and
+stored for future use. If indexing is disabled, eager dependencies are instantiated immediately after activation. 
+
+Please note that indexing and eager dependency initialization is performed asyncronously as the operation directly depends on the size of the
+dependency container. If this operation must be awaited then the async variant of the `activate` method can be used instead. For managed containers,
+use the `setContainer` method of the `@Dependencies` propert wrapper. In general, in order to improve performance during indexing, prefer using
+multiple small containers that are activated independently of each other.
 
 ### Automatic Injection
 
