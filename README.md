@@ -151,7 +151,7 @@ dependency containers have their lifetime automatically managed, while unmanaged
 deactivation. 
 
 Managed dependency containers can be defined by using the `@Dependencies` property wrapper and will be active as long as the wrapped property is
-not deallocated. Changing the value of the property will deactivate the old value and activate the new one. Creating a manage container simply
+not deallocated. Changing the value of the property will deactivate the old value and activate the new one. Creating a managed container simply
 requires wrapping a dependency container using the property wrapper:
 
 ```swift
@@ -161,9 +161,9 @@ var container = DependencyContainer {}
 
 ```
 
-Unmanaged containers are dependency containers that are defined without using the `@Dependencies` property wrapper. After defining an unmanaged
+Unmanaged containers, are dependency containers that are defined without using the `@Dependencies` property wrapper. After defining an unmanaged
 container, it has to be activated manually by using the activation / deactivation methods defined in `DependencyGraph`. Deactivation must be also be
-manually managed, especially if the container has a very specific lifetime, for example it should be active only while a user is not logged in.
+manually managed, especially if the container has a very specific lifetime, for example if it should be active only while a user is not logged in.
 
 ```swift
 
@@ -208,7 +208,7 @@ Optional configuration parameters, such as setting the way the dependency is loc
 #### Register Dependencies By Name
 
 By default, dependencies are registered and located by their type. Alternatively, dependencies may also be located by a name, which can be
-any string value. If multiple dependencies are defined for the same name in the same container, the first one will be used and the rest will be discarded.
+any string value. If multiple dependencies are defined for the same name in the same container, only one will be used and the rest will be discarded.
 
 ```swift
 
@@ -288,7 +288,7 @@ Adding a conformance or inheritance to a dependecy that is of an unrelated type,
 #### Register Dependencies By Associated Value
 
 Similar to registering a dependency by name, a dependency can also be registered by an associated value. The associated value must conform to 
-the `Hashable` protocol. If multiple dependencies are defined for the same hashable value in the same container, the first one will be used and
+the `Hashable` protocol. If multiple dependencies are defined for the same hashable value in the same container, only one will be used and
 the rest will be discarded.
 
 ```swift
@@ -308,7 +308,7 @@ Dependency {
 
 ```
 
-When using associated value located dependencies having a fast and collision free hashable implementation can make a significant difeerence in
+When using associated value located dependencies, having a fast and collision free hashable implementation can make a significant difference in
 performance.
 
 #### Dependency Scope
@@ -323,8 +323,9 @@ The following four scopes are available:
 | Singleton   | The same instance of the dependency will be used every time is it injected. |
 | Managed     | The same instance of the dependency will be used every time is it injected, until the given publisher fires. |
 
-By default, the scope of a dependency is automatically resolved differently based on whether the type of the dependency is a value type or a reference
-type. The automatically scope selected for value types is `.instance` while for reference type `.shared` is used. Furthermore, as value types cannot be reference counted, using the `.shared` scope with a value type is equivalent to using the `.instance` scope.
+By default, the scope of a dependency is automatically resolved, based on whether the type of the dependency is a value type or a reference
+type. The scope automatically selected for value types is `.instance`, while for reference types `.shared` is used. Furthermore, as value types
+cannot be reference counted, using the `.shared` scope with a value type is equivalent to using the `.instance` scope.
 
 The scope of a dependency can be set using the `scope` dependency modifier:
 
@@ -370,8 +371,8 @@ Dependency {
 
 #### Dependency Groups
 
-As discussed in a previous section conditional dependency registrations can conditionally provide dependencies based on the state of the system.
-However, if several dependencies are conditionally enabled based on the same state it may be helpful to group them together and conditioanlly enable
+As discussed in a previous section, conditional dependency registrations can conditionally provide dependencies based on the state of the system.
+However, if several dependencies are conditionally enabled based on the same state it may be helpful to group them together and conditionally enable
 the entire group. A dependency group can be initialized by passing a provider closure that builds the registrar of the group.
 
 ```swift
@@ -393,13 +394,13 @@ Enabling or disabling a dependency group can be achieved using the `enabled` dep
 
 #### Other Registration Representations
 
-Other that using the `Dependency` and `DependencyGroup` structs while building dependency containers, two more components that are representations of
+Other than using the `Dependency` and `DependencyGroup` structs while building dependency containers, two more components that are representations of
 registrations can be used to register dependencies. 
 
 ##### Autoclosure Registration Component
 
-The first registration representing component are provider autoclosures, which can be used as a convenience for registering type located dependencies with zero
-parameter initializers.
+The first registration representing component are provider autoclosures, which can be used as a convenience for registering type located dependencies
+with zero parameter initializers.
 
 ```swift
 
@@ -424,6 +425,41 @@ Completely custom dependency registration types can also be used with a dependen
 `DependencyRepresenting` protocol. The protocol has four requirements to define the characteristics of the dependency, three of them are optional
 and define the dependency locator, scope and eagerness. The fourth requirement is a property called `dependencyProvider`, which must provide a function
 that will be used to instantiate the dependency.
+
+```swift
+
+struct RepositoryDependency: DependencyRepresenting {
+    
+    var locator: DependencyLocator {
+        .name(Self.name)
+    }
+    
+    var scope: DependencyScope {
+        .singleton
+    }
+    
+    var eagerness: DependencyEagerness {
+        .eager
+    }
+    
+    var dependencyProvider: DependencyFactory.Provider<Repository> {
+        DependencyFactory.Provider { cache in
+            Repository(cachedBy: cache)
+        }
+    }
+    
+    static let name = "repository"
+}
+
+@Dependencies
+var container = DependencyContainer {
+    RepositoryDependency()
+}
+
+@Injected(name: RepositoryDependency.name)
+var repository: Repository
+
+```
 
 ### Multiple Dependency Containers
 
@@ -456,6 +492,107 @@ multiple small containers that are activated independently of each other.
 
 ### Automatic Injection
 
+Automatic injection is performed by using the `@Injected` property wrapper. When using this property wrapper the dependency is injected lazily at the
+time when it was first requested which can be helpful for defining cyclic relationships between dependencies.
+
+The injected property wrapper will attempt to inject the dependency, the first time it's wrapped value is requested. If the dependency cannot be found
+or it has a mismatching type it will cause a runtime precondition failure, which will print the file and line of the failure.
+
+#### Inject By Name
+
+Dependencies can be injected by using the same name they were registered with in their dependency container. The registered dependency type must be
+convertible to the type of the wrapped property by type casting.
+
+Injecting dependencies by name requires the use of the appropriate Injected initializer. The first argument has the label of `name` and defines
+the name the dependency will be located with. After the first argument of the initializer, the rest of the arguments are parsed as instantiation
+parameters used to instantiate the dependency.
+
+```swift
+
+enum Services: String {
+    case service
+    case repository
+}
+
+@Dependencies
+var container = DependencyContainer {
+    
+    Dependency {
+        Service()
+    }
+    .named(Services.service)
+    
+    Dependency { context in
+        Repository(managedObjectContext: context)
+    }
+    .named(Services.repository)
+}
+
+@Injected(name: Services.service)
+var service: Service
+
+@Injected(name: Services.repository, ManagedObjectContexts.repositoryContext)
+var repository: Repository
+
+```
+
+#### Inject By Type
+
+//
+
+
+#### Inject By Associated Value
+
+Dependencies can be injected by using the same hashable value they were registered with, in their dependency container. The registered dependency type
+must be convertible to the type of the wrapped property by type casting.
+
+Injecting dependencies by associated values requires the use of the appropriate Injected initializer. The first argument has the label of `value` and
+defines the value will be located with. After the first argument of the initializer, the rest of the arguments are parsed as instantiation parameters
+used to instantiate the dependency. The hashvalue of the given value must not change for different instances representing the same dependency.
+
+```swift
+
+protocol UploadLocation: Hashable {}
+
+class ProfileAvatarLocation: UploadLocation {}
+class ProfileBannerLocation: UploadLocation {}
+
+struct Model<T>: Hashable {}
+
+@Dependencies
+var container = DependencyContainer {
+    
+    Dependency {
+        ProfileAvatarUploadService()
+    }
+    .associated(with: ProfileAvatarLocation())
+    
+    Dependency {
+        ProfileBannerUploadService()
+    }
+    .associated(with: ProfileBannerLocation())
+    
+    Dependency { context in
+        UserRepository(managedObjectContext: context)
+    }
+    .associated(
+        with: Model(
+            of: User.self
+        )
+    )
+}
+
+@Injected(value: ProfileAvatarLocation())
+var avatarUploadService: UploadServiceProtocol
+
+@Injected(value: ProfileBannerLocation())
+var bannerUploadService: UploadServiceProtocol
+
+@Injected(value: Model(of: User.self), ManagedObjectContexts.usersContext)
+var userRepository: UserRepository
+
+```
+
 Name
 Simple types / protocol / superclass, optional type, collections
 Value
@@ -472,7 +609,7 @@ Value
 
 ## Interoperabilty
 
-// aware protocol, graphChangedPublisher, autoreloading
+// aware protocol, graphChangedPublisher, autoreloading, config
 
 
 

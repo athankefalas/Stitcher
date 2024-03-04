@@ -35,6 +35,6 @@ public extension DependencyRepresenting {
     }
     
     var locator: DependencyLocator {
-        DependencyLocator.type(T.self)
+        .type(T.self)
     }
 }
