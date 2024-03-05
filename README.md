@@ -736,10 +736,10 @@ in the `@Injected` property wrapper that can be of use:
 
 ### Configuration
 
-The behaviour of Stitcher can be configured using the `StitcherConfiguration` enum.
+The behaviour of Stitcher can be configured using the properties defined in the `StitcherConfiguration` enum.
 
 | Option | Behaviour |
 | - | - |
-| isIndexingEnabled | Controls whether indexing of dependency containers is active. An indexed container may have slower performance when looking up a dependency |
+| isIndexingEnabled | Controls whether indexing of dependency containers is active. An unindexed container may have slower performance when looking up dependencies |
 | approximateDependencyCount | An approximate count of the number of defined dependencies used to optimize memory allocations during indexing |
 | autoCleanupFrequency | The frequency with which the instance storage of the dependency graph releases unused or empty storage entries |
