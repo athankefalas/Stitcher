@@ -2,7 +2,7 @@
 
 Stitcher is a dependecy injection library for Swift projects.
 
-- [Stitcher](#stitcher)
+Contents:
   - [✔️ Minimum Requirements](#️-minimum-requirements)
   - [⏱ Version History](#-version-history)
   - [🧰 Features](#-features)
@@ -35,7 +35,6 @@ Stitcher is a dependecy injection library for Swift projects.
       - [DependencyGraph Change Observations](#dependencygraph-change-observations)
       - [Configuration](#configuration)
   - [🪲 Issues and Feature Requests](#-issues-and-feature-requests)
-
 
 
 ## ✔️ Minimum Requirements
