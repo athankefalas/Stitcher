@@ -3,40 +3,41 @@
 Stitcher is a dependecy injection library for Swift projects.
 
 - [Stitcher](#stitcher)
-  - [Minimum Requirements](#minimum-requirements)
+  - [✔️ Minimum Requirements](#️-minimum-requirements)
   - [⏱ Version History](#-version-history)
   - [🧰 Features](#-features)
   - [📦 Installation](#-installation)
     - [Swift Package](#swift-package)
     - [Manually](#manually)
   - [⚡️ Quick Start](#️-quick-start)
-  - [Dependency Container](#dependency-container)
-    - [Dependency Registration](#dependency-registration)
-      - [Register Dependencies By Name](#register-dependencies-by-name)
-      - [Register Dependencies By Type](#register-dependencies-by-type)
-      - [Register Dependencies By Associated Value](#register-dependencies-by-associated-value)
-      - [Dependency Scope](#dependency-scope)
-      - [Dependency Eagerness](#dependency-eagerness)
-      - [Dependency Groups](#dependency-groups)
-      - [Other Registration Representations](#other-registration-representations)
-        - [Autoclosure Registration Component](#autoclosure-registration-component)
-        - [DependencyRepresenting Registration Component](#dependencyrepresenting-registration-component)
-    - [Multiple Dependency Containers](#multiple-dependency-containers)
-  - [Dependency Graph](#dependency-graph)
-    - [Automatic Injection](#automatic-injection)
-      - [Inject By Name](#inject-by-name)
-      - [Inject By Type](#inject-by-type)
-      - [Inject By Associated Value](#inject-by-associated-value)
-    - [Manual Injection](#manual-injection)
-    - [Dependency Cycles](#dependency-cycles)
-  - [Interoperabilty](#interoperabilty)
-    - [PostInstantiationAware Hook](#postinstantiationaware-hook)
-    - [DependencyGraph Change Observations](#dependencygraph-change-observations)
-    - [Configuration](#configuration)
+  - [📋 Library Overview](#-library-overview)
+    - [Dependency Container](#dependency-container)
+      - [Dependency Registration](#dependency-registration)
+        - [Register Dependencies By Name](#register-dependencies-by-name)
+        - [Register Dependencies By Type](#register-dependencies-by-type)
+        - [Register Dependencies By Associated Value](#register-dependencies-by-associated-value)
+        - [Dependency Scope](#dependency-scope)
+        - [Dependency Eagerness](#dependency-eagerness)
+        - [Dependency Groups](#dependency-groups)
+        - [Other Registration Representations](#other-registration-representations)
+          - [Autoclosure Registration Component](#autoclosure-registration-component)
+          - [DependencyRepresenting Registration Component](#dependencyrepresenting-registration-component)
+      - [Multiple Dependency Containers](#multiple-dependency-containers)
+    - [Dependency Graph](#dependency-graph)
+      - [Automatic Injection](#automatic-injection)
+        - [Inject By Name](#inject-by-name)
+        - [Inject By Type](#inject-by-type)
+        - [Inject By Associated Value](#inject-by-associated-value)
+      - [Manual Injection](#manual-injection)
+      - [Dependency Cycles](#dependency-cycles)
+    - [Interoperabilty](#interoperabilty)
+      - [PostInstantiationAware Hook](#postinstantiationaware-hook)
+      - [DependencyGraph Change Observations](#dependencygraph-change-observations)
+      - [Configuration](#configuration)
 
 
 
-## Minimum Requirements
+## ✔️ Minimum Requirements
 
 Stitcher requires at least **iOS 13, macOS 10.15, tvOS 13** or **watchOS 6** and **Swift version 5.9**.
 The minimum OS versions may be dropped in a future release as the main dependency from these versions is `Combine`.
@@ -116,7 +117,9 @@ class ProfileSceneViewModel: ObservableObject {
 
 ```
 
-## Dependency Container
+## 📋 Library Overview
+
+### Dependency Container
 
 A `DependencyContainer` is a data structure that owns a set of dependencies. A container can be created by registering dependencies or by
 merging multiple other dependency containers. Dependencies can be registered in a container using a provider closure that builds the registrar of the container. The provider closure uses a result builder to compose the dependencies of a container, with support for conditional statements and grouping. The builder supports different types of components, with the most common being the `DependencyGroup` and `Dependency`.
@@ -216,7 +219,7 @@ DependencyGraph.deactivate(container)
 
 ```
 
-### Dependency Registration
+#### Dependency Registration
 
 Dependencies can be registered by using the `Dependency` struct, a primitive component used to define a single dependency.
 Different initializers can be used to denote the way the dependency will be located, while modifying the scope and eagerness of the dependency
@@ -244,7 +247,7 @@ Dependency { firstParameter, secondParameter in
 
 Optional configuration parameters, such as setting the way the dependency is located, it's scope and it's eagerness will be discussed in the following sections.
 
-#### Register Dependencies By Name
+##### Register Dependencies By Name
 
 By default, dependencies are registered and located by their type. Alternatively, dependencies may also be located by a name, which can be
 any string value. If multiple dependencies are defined for the same name in the same container, only one will be used and the rest will be discarded.
@@ -289,7 +292,7 @@ either `RawRepresentable` or `CustomStringConvertible` in order to avoid using r
 must be located by name, but the name representing type is not easily covnertible to string, associated values may be used instead which
 require that the representation type conforms to `Hashable`.
 
-#### Register Dependencies By Type
+##### Register Dependencies By Type
 
 When using the `Dependency` struct by default the dependency is registered and located by it's type.
 However, sometimes it may be required to locate a dependency not by it's exact type, but by a protocol it conforms to, or a superclass it
@@ -324,7 +327,7 @@ Dependency {
 
 Adding a conformance or inheritance to a dependecy that is of an unrelated type, will result in an error when attempting to inject the dependency.
 
-#### Register Dependencies By Associated Value
+##### Register Dependencies By Associated Value
 
 Similar to registering a dependency by name, a dependency can also be registered by an associated value. The associated value must conform to 
 the `Hashable` protocol. If multiple dependencies are defined for the same hashable value in the same container, only one will be used and
@@ -350,7 +353,7 @@ Dependency {
 When using associated value located dependencies, having a fast and collision free hashable implementation can make a significant difference in
 performance.
 
-#### Dependency Scope
+##### Dependency Scope
 
 The scope of a dependency controls how it's lifetime is managed by the dependency graph once instantiated.
 The following four scopes are available:
@@ -392,7 +395,7 @@ Dependency {
 
 ```
 
-#### Dependency Eagerness
+##### Dependency Eagerness
 
 By default, dependencies are lazily instantiated when first required for injection. There are some cases, such as a singleton event tracking
 service for example, that require the dependency to be instantiated when it's dependency container is activated in order to be able to receive events
@@ -408,7 +411,7 @@ Dependency {
 
 ```
 
-#### Dependency Groups
+##### Dependency Groups
 
 As discussed in a previous section, conditional dependency registrations can conditionally provide dependencies based on the state of the system.
 However, if several dependencies are conditionally enabled based on the same state it may be helpful to group them together and conditionally enable
@@ -431,12 +434,12 @@ DependencyContainer {
 
 Enabling or disabling a dependency group can be achieved using the `enabled` dependency group modifier.
 
-#### Other Registration Representations
+##### Other Registration Representations
 
 Other than using the `Dependency` and `DependencyGroup` structs while building dependency containers, two more components that are representations of
 registrations can be used to register dependencies. 
 
-##### Autoclosure Registration Component
+###### Autoclosure Registration Component
 
 The first registration representing component are provider autoclosures, which can be used as a convenience for registering type located dependencies
 with zero parameter initializers.
@@ -458,7 +461,7 @@ DependencyContainer {
 The two registrations above are equivalent. The autoclosure from the first dependency **will not be invoked** when the provider closure is evaluated,
 but when the dependency is instantiated by the dependency graph.
 
-##### DependencyRepresenting Registration Component
+###### DependencyRepresenting Registration Component
 
 Completely custom dependency registration types can also be used with a dependency container. The custom registration type must conform to the
 `DependencyRepresenting` protocol. The protocol has four requirements to define the characteristics of the dependency, three of them are optional
@@ -500,7 +503,7 @@ var repository: Repository
 
 ```
 
-### Multiple Dependency Containers
+#### Multiple Dependency Containers
 
 In modular applications, it is possible to have different portions of the system segregated to smaller subsystems. In order to support this paradigm,
 it is possible to use multiple dependency containers, either by having multiple (managed or unmanaged) containers active at the same time, or by
@@ -515,7 +518,7 @@ let container = DependencyContainer(merging: containers)
 
 Please note that the merged containers are strongly retained by the composite dependency cotnainer in order to correctly propagate observations.
 
-## Dependency Graph
+### Dependency Graph
 
 The dependency graph represents a composite of all active dependency containers along with additional storage to store dependency instances.
 Furthermore, it is responsible for handling the activation, indexing and deactivation of dependency containers. 
@@ -529,7 +532,7 @@ dependency container. If this operation must be awaited then the async variant o
 use the `setContainer` method of the `@Dependencies` propert wrapper. In general, in order to improve performance during indexing, prefer using
 multiple small containers that are activated independently of each other.
 
-### Automatic Injection
+#### Automatic Injection
 
 Automatic injection is performed by using the `@Injected` property wrapper. When using this property wrapper the dependency is injected lazily at the
 time when it was first requested which can be helpful for defining cyclic relationships between dependencies.
@@ -537,7 +540,7 @@ time when it was first requested which can be helpful for defining cyclic relati
 The injected property wrapper will attempt to inject the dependency, the first time it's wrapped value is requested. If the dependency cannot be found
 or it has a mismatching type it will cause a runtime precondition failure, which will print the file and line of the failure.
 
-#### Inject By Name
+##### Inject By Name
 
 Dependencies can be injected by using the same name they were registered with in their dependency container. The registered dependency type must be
 convertible to the type of the wrapped property by type casting.
@@ -575,7 +578,7 @@ var repository: Repository
 
 ```
 
-#### Inject By Type
+##### Inject By Type
 
 The default way to register and inject dependencies is by their type, or a supertype related by a protocol conformance or by inheritance.
 Other that using the dependency type directly a few common types are also supported:
@@ -616,7 +619,7 @@ var principalAwareServices: [PrincipalAware]
 
 ```
 
-#### Inject By Associated Value
+##### Inject By Associated Value
 
 Dependencies can be injected by using the same hashable value they were registered with, in their dependency container. The registered dependency type
 must be convertible to the type of the wrapped property by type casting.
@@ -669,7 +672,7 @@ var userRepository: UserRepository
 
 ```
 
-### Manual Injection
+#### Manual Injection
 
 Manual injection follows the same principles as automatic injection, but allows for handling errors during injection instead of runtime errors.
 In contrast to automatic injection, manual injection is eager, meaning that the dependency will be instantiated immediately when requested.
@@ -701,7 +704,7 @@ let imageUploadService: ImageUploadService = try DependencyGraph.inject(byValue:
 
 ```
 
-### Dependency Cycles
+#### Dependency Cycles
 
 Cyclic dependency relationships are relationships between two types, that depend on each other during initialization. For example, given a primary type
 named `Root` and a secondary type named `Leaf`, root has a property of the leaf type that must be set during initialization and conversely leaf type
@@ -720,11 +723,11 @@ Dependency cycle detected, Type[Root] -> Type[Leaf] -> Type[Root].
 
 The above error has the root type and all dependency instantiations performed in the same context so the cycle can be easily tracked and corrected.
 
-## Interoperabilty
+### Interoperabilty
 
 Stitcher has a few interoperability access points, in order to configure the behaviour of the library or receive updates on state changes.
 
-### PostInstantiationAware Hook
+#### PostInstantiationAware Hook
 
 The `PostInstantiationAware` protocol can be used to hook into the initialization of dependencies by the `DependencyGraph` in order to perform various
 actions, such as resource loading, injecting lazy dependencies etc. It has a single requirement, a function called `didInstantiate`, which is invoked
@@ -757,7 +760,7 @@ var container = DependencyContainer {
 Please note, that there is *no guarantee* of the thread that will invoke the `didInstantiate` method, so using this hook to perform UI updates without
 first dispatching to the main thread, may lead to unexpected behaviours or even crashes.
 
-### DependencyGraph Change Observations
+#### DependencyGraph Change Observations
 
 As dependency containers are activated, invalidated or deactivated the dependencies available to the dependency graph may change. In order to reload
 any dependencies at that time an observation is needed. The dependency graph has a publisher, that fires whenever the available dependencies are
@@ -773,7 +776,7 @@ in the `@Injected` property wrapper that can be of use:
 3. The `autoreload` function
    Automatically reloads the injected dependency after *every* change of the dependency graph.
 
-### Configuration
+#### Configuration
 
 The behaviour of Stitcher can be configured using the properties defined in the `StitcherConfiguration` enum.
 
