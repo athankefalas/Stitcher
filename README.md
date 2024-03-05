@@ -34,6 +34,7 @@ Stitcher is a dependecy injection library for Swift projects.
       - [PostInstantiationAware Hook](#postinstantiationaware-hook)
       - [DependencyGraph Change Observations](#dependencygraph-change-observations)
       - [Configuration](#configuration)
+  - [🪲 Issues and Feature Requests](#-issues-and-feature-requests)
 
 
 
@@ -52,8 +53,8 @@ The minimum OS versions may be dropped in a future release as the main dependenc
 
 ## 🧰 Features
 
-- Easy to setup.
-- Declarative API for registering dependencies, including conditional dependecny definition.
+- Easy and fast setup.
+- Flexible declarative API for registering dependencies, including conditional dependency definitions.
 - Composable dependency management support for modular projects.
 - Supports for injection by name, by type and by associated values.
 - Type safe initialization parameters for dependency initialization.
@@ -786,3 +787,7 @@ The behaviour of Stitcher can be configured using the properties defined in the 
 | isIndexingEnabled | Controls whether indexing of dependency containers is active. An unindexed container may have slower performance when looking up dependencies |
 | approximateDependencyCount | An approximate count of the number of defined dependencies used to optimize memory allocations during indexing |
 | autoCleanupFrequency | The frequency with which the instance storage of the dependency graph releases unused or empty storage entries |
+
+## 🪲 Issues and Feature Requests
+
+If you have a problem with the library or have a feature requests make sure to open an issue.
