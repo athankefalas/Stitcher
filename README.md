@@ -172,7 +172,6 @@ DependencyContainer {
 .invalidated(tracking: ObservableModel.shared)
 
 // Invalidate the dependency container when the authenticationStateChangedPublisher receives an event:
-
 DependencyContainer {
 
     if ObservableModel.shared.isLoggedIn {
@@ -186,7 +185,7 @@ DependencyContainer {
 
 ```
 
-Dependency contaners are reference types, so the invalidation can be attached to any container as long as we have a reference to it,
+Dependency containers are reference types, so the invalidation can be attached to any container as long as we have a reference to it,
 even if it is already activated or managed by the `@Dependencies` property wrapper. When using manual invalidation with observable 
 objects or publishers, please keep in mind that continously or frequently invalidating a dependency container can result in deteriorated performance.
 
@@ -195,7 +194,7 @@ dependency containers have their lifetime automatically managed, while unmanaged
 deactivation. 
 
 Managed dependency containers can be defined by using the `@Dependencies` property wrapper and will be active as long as the wrapped property is
-not deallocated. Changing the value of the property will deactivate the old value and activate the new one. Creating a managed container simply
+not deallocated. Changing the value of the property will deactivate the old container and activate the new one. Creating a managed container simply
 requires wrapping a dependency container using the property wrapper:
 
 ```swift
@@ -272,7 +271,7 @@ Dependency(named: "some-service") { firstParameter, secondParameter in
 
 // Setting a name via modifier
 
-Dependency(named: "service") {
+Dependency {
     Service()
 }
 .named("service")
@@ -291,7 +290,7 @@ Dependency { firstParameter, secondParameter in
 
 The name initializers and the the `named` dependency modifiers also have overloads that can be used with types that conform to
 either `RawRepresentable` or `CustomStringConvertible` in order to avoid using raw string values directly. In cases where the dependency
-must be located by name, but the name representing type is not easily covnertible to string, associated values may be used instead which
+must be located by name, but the name representing type is not easily convertible to a string, associated values may be used instead which
 require that the representation type conforms to `Hashable`.
 
 ##### Register Dependencies By Type
@@ -513,7 +512,7 @@ merging each subsystem container into a composite dependency container.
 
 ```swift
 
-let containers: [DependencyContainer] = makeContainers()
+let containers: [DependencyContainer] = composeFeatureContainers()
 let container = DependencyContainer(merging: containers)
 
 ```
@@ -522,8 +521,9 @@ Please note that the merged containers are strongly retained by the composite de
 
 ### Dependency Graph
 
-The dependency graph represents a composite of all active dependency containers along with additional storage to store dependency instances.
-Furthermore, it is responsible for handling the activation, indexing and deactivation of dependency containers. 
+The dependency graph represents a composite of all active dependency containers along with additional storage to store dependency instances and is
+the primary component needed to inject dependencies. Furthermore, it is responsible for handling the activation, indexing and deactivation of
+dependency containers. 
 
 Upon activating a dependency container, and depending on the options defined in `StitcherConfiguration` the dependency graph can index the registrar
 of a container in order to minimize the search time for dependencies during injection. During indexing, any eager dependencies are instantiated and
@@ -540,7 +540,8 @@ Automatic injection is performed by using the `@Injected` property wrapper. When
 time when it was first requested which can be helpful for defining cyclic relationships between dependencies.
 
 The injected property wrapper will attempt to inject the dependency, the first time it's wrapped value is requested. If the dependency cannot be found
-or it has a mismatching type it will cause a runtime precondition failure, which will print the file and line of the failure.
+or it has a mismatching type it will cause a runtime precondition failure, which will print the file and line of the wrapped property that was
+the source of the failure.
 
 ##### Inject By Name
 
@@ -620,6 +621,9 @@ var accountRepository: AccountRepository?
 var principalAwareServices: [PrincipalAware]
 
 ```
+
+Optional arrays are an additional type that is supported, but using optional collections should be avoided whenever possible. Instead, they can be
+replaced by non-optional collections.
 
 ##### Inject By Associated Value
 
@@ -713,9 +717,10 @@ named `Root` and a secondary type named `Leaf`, root has a property of the leaf 
 has a property of root type that must be set during initialization. When trying to initialize these two types, an endless recursive loop will occur,
 as in order to instantiate root, you have to instantiate leaf and in order to instantiate leaf, you have to instantiate root.
 
-In order to avoid these cycles it is recommended to lazily inject the dependencies either by using the `@Injected` property wrapper or by invoking the
+In order to avoid these cycles, it is recommended to lazily inject the dependencies either by using the `@Injected` property wrapper or by invoking the
 manual injection methods of `DependencyGraph` when the property is first accessed. Stitcher has a runtime dependency cycle detection feature that
-detects these cycles and emits a descriptive error with the entire cycle mapped out, regardless of it's depth so they can be detected and resolved.
+detects these cycles and emits a descriptive error with the entire cycle mapped out, regardless of it's depth, so they can be easily detected and
+resolved.
 
 ```
 // InjectionError description when a cycle is detected:
@@ -777,6 +782,9 @@ in the `@Injected` property wrapper that can be of use:
    Reloads the injected dependency.
 3. The `autoreload` function
    Automatically reloads the injected dependency after *every* change of the dependency graph.
+   
+Please note that extra care must be taken when reloading a dependency, such as cancelling or awaiting any running tasks owned by the previously
+injected instance.
 
 #### Configuration
 
@@ -790,4 +798,4 @@ The behaviour of Stitcher can be configured using the properties defined in the 
 
 ## 🪲 Issues and Feature Requests
 
-If you have a problem with the library or have a feature requests make sure to open an issue.
+If you have a problem with the library or have a feature request make sure to open an issue.
