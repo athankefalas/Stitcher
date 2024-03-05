@@ -41,7 +41,7 @@ Stitcher is a dependecy injection library for Swift projects.
 
 Stitcher requires at least **iOS 13, macOS 10.15, tvOS 13** or **watchOS 6** and **Swift version 5.9**.
 
-    ! The minimum OS versions may be dropped in a future release as the main dependency from these versions is `Combine`.
+The minimum OS versions may be dropped in a future release as the main dependency from these versions is `Combine`.
 
 ## ⏱ Version History
 
@@ -66,7 +66,7 @@ Stitcher requires at least **iOS 13, macOS 10.15, tvOS 13** or **watchOS 6** and
 
 You may add Stitcher as a Swift Package dependency using Xcode 11.0 or later, by selecting `File > Swift Packages > Add Package Dependency...` or `File > Add packages...` in Xcode 13.0 and later, and adding the url below:
 
-`https://github.com/athankefalas/Stitcher.git`
+    https://github.com/athankefalas/Stitcher.git
 
 ### Manually 
 
