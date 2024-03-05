@@ -19,7 +19,7 @@ final class DependencyCycleDetectorTests: XCTestCase {
         }
         
         convenience init() throws {
-            let eta: Eta = try DependencyGraph.injectDependency()
+            let eta: Eta = try DependencyGraph.inject()
             self.init(eta: eta)
         }
     }
@@ -33,7 +33,7 @@ final class DependencyCycleDetectorTests: XCTestCase {
         }
         
         convenience init() throws {
-            let zeta: Zeta = try DependencyGraph.injectDependency()
+            let zeta: Zeta = try DependencyGraph.inject()
             self.init(zeta: zeta)
         }
     }
@@ -111,7 +111,7 @@ final class DependencyCycleDetectorTests: XCTestCase {
     
     func test_dependencyCycleDetection_viaGraphTriggered() throws {
         do {
-            let _: Eta = try DependencyGraph.injectDependency()
+            let _: Eta = try DependencyGraph.inject()
             XCTFail("Cyclic dependency error not triggered.")
         } catch {
             let injectionError = InjectionError.wrapping(error)

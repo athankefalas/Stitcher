@@ -16,7 +16,7 @@ public extension DependencyGraph {
     /// - Returns: An instance of the dependency
     /// - Throws: An `InjectionError` if the dependency cannot be found or instantiated
     @_disfavoredOverload
-    static func injectDependency<Value: Hashable, SomeDependecy, each Parameter: Hashable>(
+    static func inject<Value: Hashable, SomeDependecy, each Parameter: Hashable>(
         byValue value: Value,
         parameters: repeat each Parameter
     ) throws -> SomeDependecy {

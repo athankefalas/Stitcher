@@ -79,15 +79,15 @@ final class DependencyContainerTests: XCTestCase {
             DependencyGraph.deactivate(container)
         }
         
-        let alpha: Alpha? = try DependencyGraph.injectDependency()
-        let beta: Beta? = try DependencyGraph.injectDependency()
-        let gamma: Gamma? = try DependencyGraph.injectDependency()
+        let alpha: Alpha? = try DependencyGraph.inject()
+        let beta: Beta? = try DependencyGraph.inject()
+        let gamma: Gamma? = try DependencyGraph.inject()
         XCTAssertNotNil(alpha)
         XCTAssertNotNil(beta)
         XCTAssertNotNil(gamma)
         XCTAssert(Self.zetaInitializations == 0)
         
-        let zeta: Zeta? = try DependencyGraph.injectDependency()
+        let zeta: Zeta? = try DependencyGraph.inject()
         XCTAssertNotNil(zeta)
         XCTAssert(Self.zetaInitializations == 1)
     }
@@ -149,8 +149,8 @@ final class DependencyContainerTests: XCTestCase {
             DependencyGraph.deactivate(container)
         }
         
-        var alpha: Alpha? = try DependencyGraph.injectDependency()
-        var beta: Beta? = try DependencyGraph.injectDependency()
+        var alpha: Alpha? = try DependencyGraph.inject()
+        var beta: Beta? = try DependencyGraph.inject()
         var alphaRegistrations = container.dependecyRegistrations(matching: .init(byType: Alpha.self))
         var betaRegistrations = container.dependecyRegistrations(matching: .init(byType: Beta.self))
 
@@ -163,8 +163,8 @@ final class DependencyContainerTests: XCTestCase {
         
         wait(for: [graphChangedExpectation], timeout: 0.5)
         
-        alpha = try DependencyGraph.injectDependency()
-        beta = try DependencyGraph.injectDependency()
+        alpha = try DependencyGraph.inject()
+        beta = try DependencyGraph.inject()
         alphaRegistrations = container.dependecyRegistrations(matching: .init(byType: Alpha.self))
         betaRegistrations = container.dependecyRegistrations(matching: .init(byType: Beta.self))
 
@@ -209,8 +209,8 @@ final class DependencyContainerTests: XCTestCase {
             DependencyGraph.deactivate(container)
         }
         
-        var alpha: Alpha? = try DependencyGraph.injectDependency()
-        var beta: Beta? = try DependencyGraph.injectDependency()
+        var alpha: Alpha? = try DependencyGraph.inject()
+        var beta: Beta? = try DependencyGraph.inject()
         var alphaRegistrations = container.dependecyRegistrations(matching: .init(byType: Alpha.self))
         var betaRegistrations = container.dependecyRegistrations(matching: .init(byType: Beta.self))
 
@@ -223,8 +223,8 @@ final class DependencyContainerTests: XCTestCase {
         
         wait(for: [graphChangedExpectation], timeout: 0.5)
         
-        alpha = try DependencyGraph.injectDependency()
-        beta = try DependencyGraph.injectDependency()
+        alpha = try DependencyGraph.inject()
+        beta = try DependencyGraph.inject()
         alphaRegistrations = container.dependecyRegistrations(matching: .init(byType: Alpha.self))
         betaRegistrations = container.dependecyRegistrations(matching: .init(byType: Beta.self))
 
@@ -255,8 +255,8 @@ final class DependencyContainerTests: XCTestCase {
             DependencyGraph.deactivate(container)
         }
         
-        let alpha: Alpha? = try DependencyGraph.injectDependency()
-        let beta: Beta? = try DependencyGraph.injectDependency()
+        let alpha: Alpha? = try DependencyGraph.inject()
+        let beta: Beta? = try DependencyGraph.inject()
         XCTAssertNotNil(alpha)
         XCTAssertNotNil(beta)
     }
@@ -300,16 +300,16 @@ final class DependencyContainerTests: XCTestCase {
             DependencyGraph.deactivate(container)
         }
         
-        var alpha: Alpha? = try DependencyGraph.injectDependency()
-        var beta: Beta? = try DependencyGraph.injectDependency()
+        var alpha: Alpha? = try DependencyGraph.inject()
+        var beta: Beta? = try DependencyGraph.inject()
         XCTAssertNotNil(alpha)
         XCTAssertNil(beta)
         
         state.isOn.toggle()
         wait(for: [graphChangedExpectation], timeout: 0.5)
         
-        alpha = try DependencyGraph.injectDependency()
-        beta = try DependencyGraph.injectDependency()
+        alpha = try DependencyGraph.inject()
+        beta = try DependencyGraph.inject()
         XCTAssertNil(alpha)
         XCTAssertNotNil(beta)
     }

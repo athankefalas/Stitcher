@@ -45,18 +45,18 @@ final class NameInjectionTests: XCTestCase {
     // Positive
     
     func test_injectionByName_findsDependency() throws {
-        let dependency: Alpha = try DependencyGraph.injectDependency(byName: Names.alpha)
+        let dependency: Alpha = try DependencyGraph.inject(byName: Names.alpha)
         XCTAssert(dependency.value == Alpha().value)
     }
     
     func test_injectionByName_findsOtherDependency() throws {
-        let dependency: Beta = try DependencyGraph.injectDependency(byName: Names.beta)
+        let dependency: Beta = try DependencyGraph.inject(byName: Names.beta)
         XCTAssert(dependency.value == Beta().value)
     }
     
     func test_injectionByName_aliasedRegistrationsNotOverwritten() throws {
-        let dependency: Alpha = try DependencyGraph.injectDependency(byName: Names.alpha)
-        let aliasedDependency: Alpha = try DependencyGraph.injectDependency(byName: Names.otherAlpha)
+        let dependency: Alpha = try DependencyGraph.inject(byName: Names.alpha)
+        let aliasedDependency: Alpha = try DependencyGraph.inject(byName: Names.otherAlpha)
         XCTAssert(dependency.value == Alpha().value)
         XCTAssert(aliasedDependency.value == Alpha().value)
         XCTAssert(dependency !== aliasedDependency)
@@ -66,7 +66,7 @@ final class NameInjectionTests: XCTestCase {
     
     func test_injectionByName_registredDependencyNotDiscoverableByType() throws {
         do {
-            let _: Alpha = try DependencyGraph.injectDependency()
+            let _: Alpha = try DependencyGraph.inject()
             XCTFail("Expected dependency to not be registred.")
         } catch {
             let injectionError = error as! InjectionError
@@ -82,7 +82,7 @@ final class NameInjectionTests: XCTestCase {
     
     func test_injectionByName_registredDependencyNotDiscoverableByValue() throws {
         do {
-            let _: Alpha = try DependencyGraph.injectDependency(byValue: Names.alpha)
+            let _: Alpha = try DependencyGraph.inject(byValue: Names.alpha)
             XCTFail("Expected dependency to not be registred.")
         } catch {
             let injectionError = error as! InjectionError
@@ -98,7 +98,7 @@ final class NameInjectionTests: XCTestCase {
     
     func test_injectionByName_unregistredDependencyThrows() throws {
         do {
-            let _: Gamma = try DependencyGraph.injectDependency(byName: Names.gamma)
+            let _: Gamma = try DependencyGraph.inject(byName: Names.gamma)
             XCTFail("Expected dependency to not be registred.")
         } catch {
             let injectionError = error as! InjectionError
@@ -114,7 +114,7 @@ final class NameInjectionTests: XCTestCase {
     
     func test_injectionByName_incompatibleTypeDependencyThrows() throws {
         do {
-            let _: Gamma = try DependencyGraph.injectDependency(byName: Names.alpha)
+            let _: Gamma = try DependencyGraph.inject(byName: Names.alpha)
             XCTFail("Expected dependency to not be registred.")
         } catch {
             let injectionError = error as! InjectionError

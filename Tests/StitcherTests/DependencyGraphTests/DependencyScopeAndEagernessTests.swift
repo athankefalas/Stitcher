@@ -110,26 +110,26 @@ final class DependencyScopeAndEagernessTests: XCTestCase {
         XCTAssert(referenceTypeDependency.scope == .shared)
         XCTAssert(valueTypeDependency.scope == .instance)
         
-        let _: Two = try! DependencyGraph.injectDependency()
+        let _: Two = try! DependencyGraph.inject()
     }
     
     // Reference Types
 
     func test_instanceScope_withReferenceTypes() throws {
-        let one: Alpha = try DependencyGraph.injectDependency()
-        let other: Alpha = try DependencyGraph.injectDependency()
+        let one: Alpha = try DependencyGraph.inject()
+        let other: Alpha = try DependencyGraph.inject()
         XCTAssert(one !== other)
     }
     
     func test_sharedScope_withReferenceTypes() throws {
-        let one: Beta = try DependencyGraph.injectDependency()
-        let other: Beta = try DependencyGraph.injectDependency()
+        let one: Beta = try DependencyGraph.inject()
+        let other: Beta = try DependencyGraph.inject()
         XCTAssert(one === other)
     }
     
     func test_sharedScopeWeakly_withReferenceTypes() throws {
         let objectId: () throws -> ObjectIdentifier = {
-            var dependency: Beta = try DependencyGraph.injectDependency()
+            var dependency: Beta = try DependencyGraph.inject()
             let result = ObjectIdentifier(dependency)
             dependency = Beta()
             
@@ -142,56 +142,56 @@ final class DependencyScopeAndEagernessTests: XCTestCase {
     }
     
     func test_singletonScope_withReferenceTypes() throws {
-        let one: Gamma = try DependencyGraph.injectDependency()
-        let other: Gamma = try DependencyGraph.injectDependency()
+        let one: Gamma = try DependencyGraph.inject()
+        let other: Gamma = try DependencyGraph.inject()
         XCTAssert(one === other)
     }
     
     func test_managedScope_withReferenceTypes() throws {
-        let one: Delta = try DependencyGraph.injectDependency()
-        let other: Delta = try DependencyGraph.injectDependency()
+        let one: Delta = try DependencyGraph.inject()
+        let other: Delta = try DependencyGraph.inject()
         XCTAssert(one === other)
     }
     
     func test_managedScopeInvalidates_withReferenceTypes() throws {
-        let one: Delta = try DependencyGraph.injectDependency()
+        let one: Delta = try DependencyGraph.inject()
         Self.invalidationSubject.send()
         
-        let other: Delta = try DependencyGraph.injectDependency()
+        let other: Delta = try DependencyGraph.inject()
         XCTAssert(one !== other)
     }
     
     // Value Types
 
     func test_instanceScope_withValueTypes() throws {
-        let one: One = try DependencyGraph.injectDependency()
-        let other: One = try DependencyGraph.injectDependency()
+        let one: One = try DependencyGraph.inject()
+        let other: One = try DependencyGraph.inject()
         XCTAssert(one.id != other.id)
     }
     
     func test_sharedScope_withValueTypes() throws {
-        let one: Two = try DependencyGraph.injectDependency()
-        let other: Two = try DependencyGraph.injectDependency()
+        let one: Two = try DependencyGraph.inject()
+        let other: Two = try DependencyGraph.inject()
         XCTAssert(one.id != other.id)
     }
     
     func test_singletonScope_withValueTypes() throws {
-        let one: Three = try DependencyGraph.injectDependency()
-        let other: Three = try DependencyGraph.injectDependency()
+        let one: Three = try DependencyGraph.inject()
+        let other: Three = try DependencyGraph.inject()
         XCTAssert(one.id == other.id)
     }
     
     func test_managedScope_withValueTypes() throws {
-        let one: Four = try DependencyGraph.injectDependency()
-        let other: Four = try DependencyGraph.injectDependency()
+        let one: Four = try DependencyGraph.inject()
+        let other: Four = try DependencyGraph.inject()
         XCTAssert(one.id == other.id)
     }
     
     func test_managedScopeInvalidates_withValueTypes() throws {
-        let one: Four = try DependencyGraph.injectDependency()
+        let one: Four = try DependencyGraph.inject()
         Self.invalidationSubject.send()
         
-        let other: Four = try DependencyGraph.injectDependency()
+        let other: Four = try DependencyGraph.inject()
         XCTAssert(one.id != other.id)
     }
     

@@ -33,19 +33,19 @@ final class InjectionParameterTests: XCTestCase {
     }
 
     func test_injectionParameters_arityZero() throws {
-        let values: Values<String> = try DependencyGraph.injectDependency()
+        let values: Values<String> = try DependencyGraph.inject()
         XCTAssert(values.values.count == 0)
         XCTAssert(values.description == "")
     }
     
     func test_injectionParameters_arityOne() throws {
-        let values: Values<Int> = try DependencyGraph.injectDependency(parameters: 11)
+        let values: Values<Int> = try DependencyGraph.inject(parameters: 11)
         XCTAssert(values.values.count == 1)
         XCTAssert(values.description == "11")
     }
 
     func test_injectionParameters_arityTwo() throws {
-        let values: Values<Double> = try DependencyGraph.injectDependency(parameters: 21.0, 22.0)
+        let values: Values<Double> = try DependencyGraph.inject(parameters: 21.0, 22.0)
         XCTAssert(values.values.count == 2)
         XCTAssert(values.description == "21.0, 22.0")
     }

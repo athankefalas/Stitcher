@@ -22,7 +22,7 @@ public extension Injected {
         line: UInt = #line
     ) {
         self.init(locatorMatch: .init(byName: name)) {
-            try DependencyGraph.injectDependency(
+            try DependencyGraph.inject(
                 byName: name,
                 parameters: repeat each parameters
             )
@@ -45,7 +45,7 @@ public extension Injected {
         
         let name = name.description
         self.init(locatorMatch: .init(byName: name)) {
-            try DependencyGraph.injectDependency(
+            try DependencyGraph.inject(
                 byName: name,
                 parameters: repeat each parameters
             )
@@ -67,7 +67,7 @@ public extension Injected {
         
         let name = name.rawValue
         self.init(locatorMatch: .init(byName: name)) {
-            try DependencyGraph.injectDependency(
+            try DependencyGraph.inject(
                 byName: name,
                 parameters: repeat each parameters
             )
@@ -96,7 +96,7 @@ public extension Injected {
     ) {
         
         self.init(locatorMatch: .init(byType: type)) {
-            try DependencyGraph.injectDependency(
+            try DependencyGraph.inject(
                 parameters: repeat each parameters
             )
         } unexpectedFailure: {
@@ -121,7 +121,7 @@ public extension Injected where Value: DependencyContainingCollection {
     ) where Value.Element == SomeDependency {
         
         self.init(locatorMatch: .init(byType: SomeDependency.self)) {
-            try DependencyGraph.injectDependency(
+            try DependencyGraph.inject(
                 parameters: repeat each parameters
             )
         } unexpectedFailure: {
@@ -148,7 +148,7 @@ public extension Injected {
     ) where Value == Optional<SomeDependency> {
         
         self.init(locatorMatch: .init(byType: SomeDependency.self)) {
-            try DependencyGraph.injectDependency(
+            try DependencyGraph.inject(
                 parameters: repeat each parameters
             )
         } unexpectedFailure: {
@@ -169,7 +169,7 @@ public extension Injected {
     ) where Value == Optional<SomeCollection> {
         
         self.init(locatorMatch: .init(byType: SomeCollection.Element.self)) {
-            try DependencyGraph.injectDependency(
+            try DependencyGraph.inject(
                 byType: Optional<SomeCollection>.self,
                 parameters: repeat each parameters
             )
@@ -196,7 +196,7 @@ public extension Injected {
     ) {
         
         self.init(locatorMatch: .init(byValue: value)) {
-            try DependencyGraph.injectDependency(
+            try DependencyGraph.inject(
                 byValue: value,
                 parameters: repeat each parameters
             )

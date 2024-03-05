@@ -16,7 +16,7 @@ public extension DependencyGraph {
     /// - Returns: An instance of the dependency
     /// - Throws: An `InjectionError` if the dependency cannot be found or instantiated
     @_disfavoredOverload
-    static func injectDependency<SomeDependecy, each Parameter: Hashable>(
+    static func inject<SomeDependecy, each Parameter: Hashable>(
         byType type: SomeDependecy.Type = SomeDependecy.self,
         parameters: repeat each Parameter
     ) throws -> SomeDependecy {
@@ -49,7 +49,7 @@ public extension DependencyGraph {
     ///   - parameters: The parameters used to instantiate the dependency
     /// - Returns: A collection with every matching registred instance of the dependency
     /// - Throws: An `InjectionError` if the dependency cannot be instantiated
-    static func injectDependency<Container: DependencyContainingCollection, SomeDependecy, each Parameter: Hashable>(
+    static func inject<Container: DependencyContainingCollection, SomeDependecy, each Parameter: Hashable>(
         byType type: Container.Type = Container.self,
         parameters: repeat each Parameter
     ) throws -> Container where Container.Element == SomeDependecy {
@@ -78,7 +78,7 @@ public extension DependencyGraph {
     ///   - parameters: The parameters used to instantiate the dependency
     /// - Returns: An instance of the dependency or `nil`
     /// - Throws: An `InjectionError` if the dependency cannot be instantiated
-    static func injectDependency<SomeDependecy, each Parameter: Hashable>(
+    static func inject<SomeDependecy, each Parameter: Hashable>(
         byType type: SomeDependecy.Type = SomeDependecy.self,
         parameters: repeat each Parameter
     ) throws -> Optional<SomeDependecy> {
@@ -113,7 +113,7 @@ public extension DependencyGraph {
     /// - Returns: A collection with every matching registred instance of the dependency
     /// - Throws: An `InjectionError` if the dependency cannot be instantiated
     @available(*, deprecated, message: "Optional collection dependencies are deprecated. Please use an empty collection instead.")
-    static func injectDependency<Container: DependencyContainingCollection, SomeDependecy, each Parameter: Hashable>(
+    static func inject<Container: DependencyContainingCollection, SomeDependecy, each Parameter: Hashable>(
         byType type: Optional<Container>.Type = Optional<Container>.self,
         parameters: repeat each Parameter
     ) throws -> Optional<Container> where Container.Element == SomeDependecy {

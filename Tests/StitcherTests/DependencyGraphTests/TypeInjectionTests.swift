@@ -48,48 +48,48 @@ final class TypeInjectionTests: XCTestCase {
     // Positive
 
     func test_injectionByType_findsAlphaDependency() throws {
-        let dependency: Alpha = try DependencyGraph.injectDependency()
+        let dependency: Alpha = try DependencyGraph.inject()
         XCTAssert(dependency.value == Alpha().value)
     }
     
     func test_injectionByType_findsBetaDependency() throws {
-        let dependency: Beta = try DependencyGraph.injectDependency()
+        let dependency: Beta = try DependencyGraph.inject()
         XCTAssert(dependency.value == Beta().value)
     }
     
     func test_injectionByType_findsGammaDependency() throws {
-        let dependency: Gamma = try DependencyGraph.injectDependency()
+        let dependency: Gamma = try DependencyGraph.inject()
         XCTAssert(dependency.value == Gamma().value)
     }
     
     func test_injectionByType_findsDeltaDependency() throws {
-        let dependency: Delta = try DependencyGraph.injectDependency()
+        let dependency: Delta = try DependencyGraph.inject()
         XCTAssert(dependency.value == Delta().value)
     }
 
     func test_injectionByType_findsDependencyByProtocolConformance() throws {
-        let dependency: TypePrinting = try DependencyGraph.injectDependency()
+        let dependency: TypePrinting = try DependencyGraph.inject()
         XCTAssert(dependency.printType() == Alpha().printType())
     }
     
     func test_injectionByType_findsNilForOptionalDependency() throws {
-        let dependency: Epsilon? = try DependencyGraph.injectDependency()
+        let dependency: Epsilon? = try DependencyGraph.inject()
         XCTAssertNil(dependency)
     }
     
     func test_injectionByType_findsDependenciesByProtocolConformance() throws {
-        let dependencies: [LetterClassImplementing] = try DependencyGraph.injectDependency()
+        let dependencies: [LetterClassImplementing] = try DependencyGraph.inject()
         XCTAssert(dependencies.count == 4)
     }
     
     func test_injectionByType_findsDependenciesByInheritedSuperclass() throws {
-        let dependencies: [Letter] = try DependencyGraph.injectDependency()
+        let dependencies: [Letter] = try DependencyGraph.inject()
         XCTAssert(dependencies.count == 4)
     }
     
     @available(*, deprecated)
     func test_injectionByType_findsOptionalDependenciesByProtocolConformance() throws {
-        let dependencies: [LetterClassImplementing]? = try DependencyGraph.injectDependency(
+        let dependencies: [LetterClassImplementing]? = try DependencyGraph.inject(
             byType: [LetterClassImplementing]?.self
         )
         
@@ -98,7 +98,7 @@ final class TypeInjectionTests: XCTestCase {
     
     @available(*, deprecated)
     func test_injectionByType_findsOptionalDependenciesByInheritedSuperclass() throws {
-        let dependencies: [Letter]? = try DependencyGraph.injectDependency(
+        let dependencies: [Letter]? = try DependencyGraph.inject(
             byType: [Letter]?.self
         )
         

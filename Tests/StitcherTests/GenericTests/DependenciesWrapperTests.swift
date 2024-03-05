@@ -28,7 +28,7 @@ final class DependenciesWrapperTests: XCTestCase {
     func test_dependenciesWrapper_activates() throws {
         XCTAssert(container != .empty)
         
-        let dependency: Alpha? = try DependencyGraph.injectDependency()
+        let dependency: Alpha? = try DependencyGraph.inject()
         XCTAssertNotNil(dependency)
     }
     
@@ -36,7 +36,7 @@ final class DependenciesWrapperTests: XCTestCase {
         XCTAssert(container != .empty)
         container = .empty
         
-        let dependency: Alpha? = try DependencyGraph.injectDependency()
+        let dependency: Alpha? = try DependencyGraph.inject()
         XCTAssertNil(dependency)
     }
 }

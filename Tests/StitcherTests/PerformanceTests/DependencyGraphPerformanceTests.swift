@@ -76,7 +76,7 @@ final class DependencyGraphPerformanceTests: XCTestCase {
         
         // Baseline: 100_000 @ 0,0000877 s
         measure {
-            let _: One = try! DependencyGraph.injectDependency(byName: "D\(num)")
+            let _: One = try! DependencyGraph.inject(byName: "D\(num)")
         }
         
         DependencyGraph.deactivate(container)

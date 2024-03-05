@@ -44,17 +44,17 @@ final class ValueInjectionTests: XCTestCase {
     // Positivie
     
     func test_injectionByValue_findsAlphaDependency() throws {
-        let dependency: Alpha = try DependencyGraph.injectDependency(byValue: Dependencies.alpha)
+        let dependency: Alpha = try DependencyGraph.inject(byValue: Dependencies.alpha)
         XCTAssert(dependency.value == Alpha().value)
     }
     
     func test_injectionByValue_findsBetaDependency() throws {
-        let dependency: Beta = try DependencyGraph.injectDependency(byValue: Dependencies.beta)
+        let dependency: Beta = try DependencyGraph.inject(byValue: Dependencies.beta)
         XCTAssert(dependency.value == Beta().value)
     }
     
     func test_injectionByValue_findsGammaDependency() throws {
-        let dependency: Gamma = try DependencyGraph.injectDependency(byValue: Dependencies.gamma)
+        let dependency: Gamma = try DependencyGraph.inject(byValue: Dependencies.gamma)
         XCTAssert(dependency.value == Gamma().value)
     }
 }

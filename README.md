@@ -538,8 +538,44 @@ var repository: Repository
 
 #### Inject By Type
 
-//
+The default way to register and inject dependencies is by their type, or a supertype related by a protocol conformance or by inheritance.
+Other that using the dependency type directly a few common types are also supported:
 
+1. Optional
+   Injects a dependency that matches the `Wrapped` type, or nil if no such dependency is found.
+   
+2. Arrays
+   Injects *all* dependencies that match the `Element` type, or an empty collection if no such dependencies are found.
+
+```swift
+
+class AccountRepository: PrincipalAware {}
+
+class AccountSettingsRepository: PrincipalAware {}
+
+@Dependencies
+var container = DependencyContainer {
+    Dependency {
+        AccountRepository()
+    }
+    .conforms(to: PrincipalAware.self)
+    
+    Dependency {
+        AccountSettingsRepository()
+    }
+    .conforms(to: PrincipalAware.self)
+}
+
+@Injected
+var accountRepository: AccountRepository
+
+@Injected
+var accountRepository: AccountRepository?
+
+@Injected
+var principalAwareServices: [PrincipalAware]
+
+```
 
 #### Inject By Associated Value
 
@@ -594,15 +630,37 @@ var userRepository: UserRepository
 
 ```
 
-Name
-Simple types / protocol / superclass, optional type, collections
-Value
-
 ### Manual Injection
 
-Name
-Simple types / protocol / superclass, optional type, collections
-Value
+Manual injection follows the same principles as automatic injection, but allows for handling errors during injection instead of runtime errors.
+In contrast to automatic injection, manual injection is eager, meaning that the dependency will be instantiated immediately when requested.
+Injecting an arbitrary dependency can be achieved by using the `inject` family of methods of `DependencyGraph`.
+
+```swift
+
+@Dependencies
+var container = DependencyContainer {
+    
+    Dependency {
+        AccountService()
+    }
+    .named("account-service")
+    
+    Dependency { context in
+        UserRepository(managedObjectContext: context)
+    }
+    
+    Dependency {
+        ImageUploadService()
+    }
+    .associated(with: UploadServices.images)
+}
+
+let accountService: AccountService = try DependencyGraph.inject(byName: "account-service")
+let userRepository: UserRepository = try DependencyGraph.inject(byType: UserRepository.self, ManagedObjectContexts.usersContext)
+let imageUploadService: ImageUploadService = try DependencyGraph.inject(byValue: UploadServices.images) 
+
+```
 
 ### Dependency Cycles
 
