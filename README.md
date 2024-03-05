@@ -2,6 +2,45 @@
 
 Stitcher is a dependecy injection library for Swift projects.
 
+- [Stitcher](#stitcher)
+  - [Minimum Requirements](#minimum-requirements)
+  - [⏱ Version History](#-version-history)
+  - [🧰 Features](#-features)
+  - [📦 Installation](#-installation)
+    - [Swift Package](#swift-package)
+    - [Manually](#manually)
+  - [⚡️ Quick Start](#️-quick-start)
+  - [Dependency Container](#dependency-container)
+    - [Dependency Registration](#dependency-registration)
+      - [Register Dependencies By Name](#register-dependencies-by-name)
+      - [Register Dependencies By Type](#register-dependencies-by-type)
+      - [Register Dependencies By Associated Value](#register-dependencies-by-associated-value)
+      - [Dependency Scope](#dependency-scope)
+      - [Dependency Eagerness](#dependency-eagerness)
+      - [Dependency Groups](#dependency-groups)
+      - [Other Registration Representations](#other-registration-representations)
+        - [Autoclosure Registration Component](#autoclosure-registration-component)
+        - [DependencyRepresenting Registration Component](#dependencyrepresenting-registration-component)
+    - [Multiple Dependency Containers](#multiple-dependency-containers)
+  - [Dependency Graph](#dependency-graph)
+    - [Automatic Injection](#automatic-injection)
+      - [Inject By Name](#inject-by-name)
+      - [Inject By Type](#inject-by-type)
+      - [Inject By Associated Value](#inject-by-associated-value)
+    - [Manual Injection](#manual-injection)
+    - [Dependency Cycles](#dependency-cycles)
+  - [Interoperabilty](#interoperabilty)
+    - [PostInstantiationAware Hook](#postinstantiationaware-hook)
+    - [DependencyGraph Change Observations](#dependencygraph-change-observations)
+    - [Configuration](#configuration)
+
+
+
+## Minimum Requirements
+
+Stitcher requires at least **iOS 13, macOS 10.15, tvOS 13** or **watchOS 6** and **Swift version 5.9**.
+The minimum OS versions may be dropped in a future release as the main dependency from these versions is `Combine`.
+
 ## ⏱ Version History
 
 | Version | Changes                           |
