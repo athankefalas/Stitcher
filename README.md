@@ -552,12 +552,12 @@ used to instantiate the dependency. The hashvalue of the given value must not ch
 
 ```swift
 
-protocol UploadLocation: Hashable {}
+enum UploadLocation: Hashable {
+    case avatar
+    case banner
+}
 
-class ProfileAvatarLocation: UploadLocation {}
-class ProfileBannerLocation: UploadLocation {}
-
-struct Model<T>: Hashable {}
+struct Entity<T>: Hashable {}
 
 @Dependencies
 var container = DependencyContainer {
@@ -565,27 +565,28 @@ var container = DependencyContainer {
     Dependency {
         ProfileAvatarUploadService()
     }
-    .associated(with: ProfileAvatarLocation())
+    .associated(with: UploadLocation.avatar)
     
     Dependency {
         ProfileBannerUploadService()
     }
-    .associated(with: ProfileBannerLocation())
+    .associated(with: UploadLocation.banner)
+    
     
     Dependency { context in
         UserRepository(managedObjectContext: context)
     }
     .associated(
-        with: Model(
+        with: Entity(
             of: User.self
         )
     )
 }
 
-@Injected(value: ProfileAvatarLocation())
+@Injected(value: UploadLocation.avatar)
 var avatarUploadService: UploadServiceProtocol
 
-@Injected(value: ProfileBannerLocation())
+@Injected(value: UploadLocation.banner)
 var bannerUploadService: UploadServiceProtocol
 
 @Injected(value: Model(of: User.self), ManagedObjectContexts.usersContext)
