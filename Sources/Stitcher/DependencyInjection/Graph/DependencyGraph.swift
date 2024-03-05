@@ -217,7 +217,10 @@ public enum DependencyGraph {
                 scope: registration.scope
             )
             
-            self.instanceStorage[storageKey] = instanceStorage
+            if !instanceStorage.isEmpty {
+                self.instanceStorage[storageKey] = instanceStorage
+            }
+            
             return instance
         } catch {
             

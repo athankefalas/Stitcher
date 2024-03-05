@@ -283,7 +283,7 @@ Dependency {
 
 ```
 
-Adding a conformance or inheritance to a dependecy that is of an unrelated type, will produce a runtime error in DEBUG builds.
+Adding a conformance or inheritance to a dependecy that is of an unrelated type, will result in an error when attempting to inject the dependency.
 
 #### Register Dependencies By Associated Value
 

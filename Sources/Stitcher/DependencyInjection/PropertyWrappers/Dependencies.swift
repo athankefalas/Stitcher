@@ -32,40 +32,53 @@ import Foundation
 @propertyWrapper
 public struct Dependencies {
     
-    private var container: DependencyContainer
+    private class Storage {
+        
+        var container: DependencyContainer
+        
+        init(container: DependencyContainer) {
+            self.container = container
+        }
+        
+        deinit {
+            DependencyGraph.deactivate(container)
+        }
+    }
+    
+    private var storage: Storage
     
     public var wrappedValue: DependencyContainer {
         get {
-            container
+            storage.container
         }
         
         set {
-            guard newValue !== container else {
+            guard newValue !== storage.container else {
                 return
             }
             
-            DependencyGraph.deactivate(container)
+            DependencyGraph.deactivate(storage.container)
             
-            container = newValue
-            DependencyGraph.activate(container)
+            storage.container = newValue
+            DependencyGraph.activate(storage.container)
         }
     }
     
     /// Sets the managed dependency container waiting for activation **and** indexing.
     /// - Parameter newValue: The new dependency container to activate.
     public mutating func setContainer(_ newValue: DependencyContainer) async {
-        guard newValue !== container else {
+        guard newValue !== storage.container else {
             return
         }
         
-        DependencyGraph.deactivate(container)
-        container = newValue
+        DependencyGraph.deactivate(storage.container)
+        storage.container = newValue
         
-        await DependencyGraph.activate(container)
+        await DependencyGraph.activate(storage.container)
     }
     
     public init(wrappedValue: DependencyContainer = .empty) {
-        self.container = wrappedValue
+        self.storage = Storage(container: wrappedValue)
         DependencyGraph.activate(wrappedValue)
     }
 }
