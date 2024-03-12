@@ -28,7 +28,7 @@ let package = Package(
         .package(
             url: "https://github.com/OpenCombine/OpenCombine.git",
             exact: "0.14.0"
-        )
+        ),
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.

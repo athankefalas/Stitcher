@@ -124,4 +124,70 @@ final class DependencyCycleDetectorTests: XCTestCase {
             }
         }
     }
+    
+    // Fallback
+    
+    func test_dependencyCycleDetectionFallback_key() {
+        let one = ThreadIdentifier.current
+        let other = ThreadIdentifier.current
+        XCTAssert(one == other)
+    }
+    
+    func test_dependencyCycleDetectionFallback_storage() {
+        let storage = ThreadStorage<Int>()
+        storage.set(1)
+        XCTAssert(storage.get() == 1)
+    }
+    
+    // Fallback Positive
+    
+    func test_dependencyCycleDetectionFallback_notTriggered() throws {
+        let _ = try withFallbackCycleDetection(.name("0")) {
+            return 0
+        }
+        
+        let _ = try withFallbackCycleDetection(.name("0")) {
+            return 0
+        }
+        
+        let count = 100
+        let expectation = XCTestExpectation(description: "Injection tasks completed.")
+        expectation.expectedFulfillmentCount = count
+        expectation.assertForOverFulfill = true
+        
+        for n in 1...count {
+            Task {
+                let _ = try withFallbackCycleDetection(.name("0")) {
+                    return n
+                }
+                
+                expectation.fulfill()
+            }
+        }
+        
+        wait(for: [expectation], timeout: 0.5)
+    }
+    
+    // Fallback Negative
+    
+    func test_dependencyCycleDetectionFallback_triggered() throws {
+        do {
+            let _ = try withFallbackCycleDetection(.name("0")) {
+                return try withFallbackCycleDetection(.name("0")) {
+                    return 0
+                }
+            }
+            
+            XCTFail("Cyclic dependency error not triggered.")
+        } catch {
+            let injectionError = InjectionError.wrapping(error)
+            
+            switch injectionError {
+            case .cyclicDependencyReference:
+                break
+            default:
+                throw injectionError
+            }
+        }
+    }
 }

@@ -66,6 +66,7 @@ public struct Dependencies {
     
     /// Sets the managed dependency container waiting for activation **and** indexing.
     /// - Parameter newValue: The new dependency container to activate.
+    @available(iOS 13.0, macOS 10.15, macCatalyst 13.0, tvOS 13.0, watchOS 6.0, visionOS 1.0, *)
     public mutating func setContainer(_ newValue: DependencyContainer) async {
         guard newValue !== storage.container else {
             return
