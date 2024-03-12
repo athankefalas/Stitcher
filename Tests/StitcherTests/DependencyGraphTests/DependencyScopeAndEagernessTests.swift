@@ -6,6 +6,7 @@
 //
 
 import XCTest
+import Combine
 @testable import Stitcher
 
 final class DependencyScopeAndEagernessTests: XCTestCase {

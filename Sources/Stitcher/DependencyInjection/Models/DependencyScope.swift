@@ -20,7 +20,7 @@ public enum DependencyScope: Hashable {
     case singleton
     
     /// A singleton instance of the dependency will be created, and used until the given publisher fires.
-    case managed(AnyPublisher<Void, Never>)
+    case managed(ManagedScopeProviding)
     
     private var caseIdentifier: Int {
         switch self {
@@ -35,10 +35,10 @@ public enum DependencyScope: Hashable {
         }
     }
     
-    var invalidationPublisher: AnyPublisher<Void, Never>? {
+    var managedScope: ManagedScopeProviding? {
         switch self {
-        case .managed(let publisher):
-            return publisher
+        case .managed(let scope):
+            return scope
         default:
             return nil
         }
@@ -55,19 +55,45 @@ public enum DependencyScope: Hashable {
         return (type is AnyObject.Type) ? .shared : .instance
     }
     
-    @_disfavoredOverload
-    public static func managed<P: Publisher>(
+    public static func == (lhs: DependencyScope, rhs: DependencyScope) -> Bool {
+        lhs.hashValue == rhs.hashValue
+    }
+}
+
+#if canImport(Combine)
+import Combine
+#endif
+
+import OpenCombine
+
+public extension DependencyScope {
+ 
+#if canImport(Combine)
+    @available(iOS 13.0, macOS 10.15, macCatalyst 13.0, tvOS 13.0, watchOS 6.0, visionOS 1.0, *)
+    static func managed<P: Combine.Publisher>(
         by publisher: P
     ) -> Self
     where P.Failure == Never {
         return .managed(
-            publisher
-                .map({_ in () })
-                .eraseToAnyPublisher()
+            PipelineManagedScope(
+                pipeline: publisher
+                    .map({_ in () })
+                    .erasedToAnyPipeline()
+            )
         )
     }
+#endif
     
-    public static func == (lhs: DependencyScope, rhs: DependencyScope) -> Bool {
-        lhs.hashValue == rhs.hashValue
+    static func managed<P: OpenCombine.Publisher>(
+        by publisher: P
+    ) -> Self
+    where P.Failure == Never {
+        return .managed(
+            PipelineManagedScope(
+                pipeline: publisher
+                    .map({_ in () })
+                    .erasedToAnyPipeline()
+            )
+        )
     }
 }

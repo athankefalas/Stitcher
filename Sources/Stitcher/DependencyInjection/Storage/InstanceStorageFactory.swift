@@ -46,8 +46,8 @@ enum InstanceStorageFactory {
             return SharedInstanceStorage(key: key, value: instance).erased()
         case .singleton:
             return SingletonInstanceStorage(key: key, value: instance).erased()
-        case .managed(let publisher):
-            return ManagedSingletonInstanceStorage(key: key, value: instance, tracking: publisher).erased()
+        case .managed(let scope):
+            return ManagedSingletonInstanceStorage(key: key, value: instance, tracking: scope).erased()
         }
     }
     
@@ -64,8 +64,8 @@ enum InstanceStorageFactory {
             return SharedInstanceStorage(key: key, value: instance).erased()
         case .singleton:
             return SingletonInstanceStorage(key: key, value: instance).erased()
-        case .managed(let publisher):
-            return ManagedSingletonInstanceStorage(key: key, value: instance, tracking: publisher).erased()
+        case .managed(let scope):
+            return ManagedSingletonInstanceStorage(key: key, value: instance, tracking: scope).erased()
         }
     }
 }

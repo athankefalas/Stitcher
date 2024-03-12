@@ -49,7 +49,7 @@ final class DependencyGraphPerformanceTests: XCTestCase {
             let expectation = XCTestExpectation()
             let indexedContainer = IndexedDependencyContainer(
                 container: container,
-                lazyInitializationHandler: {_ in }
+                lazyInitializationHandler: {_ in }, completion: {}
             )
             
             Task {

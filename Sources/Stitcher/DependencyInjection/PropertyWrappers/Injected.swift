@@ -56,7 +56,7 @@ public struct Injected<Value> {
         private var _value: ValueBox = .empty
         private let provider: @Sendable () throws -> Value
         private let semaphore = DispatchSemaphore(value: 1)
-        private var subscription: AnyCancellable?
+        private var subscription: AnyPipelineCancellable?
         
         var isLoaded: Bool {
             semaphore.wait()
@@ -104,7 +104,7 @@ public struct Injected<Value> {
         
         func autoreload(callback: @escaping () -> Void) {
             subscription?.cancel()
-            subscription = DependencyGraph.graphChangedPublisher
+            subscription = DependencyGraph.graphChangedPipeline
                 .sink { [weak self] in
                     self?.clear()
                     callback()

@@ -19,15 +19,15 @@ class StorageCleaner {
     
 #if DEBUG
     @Atomic
-    static var cleaupRequestsCount = 0
+    static var cleanupRequestsCount = 0
 #endif
     
-    private static let didInstantiateDependencySubject = PassthroughSubject<Void, Never>()
+    private static let didInstantiateDependencySubject = PipelineSubject<Void>()
     
-    private var cleanupHandler: @Sendable () async -> Void
-    private var subscriptions = Set<AnyCancellable>()
+    private var cleanupHandler: @Sendable () -> Void
+    private var subscriptions = Set<AnyPipelineCancellable>()
     
-    init(cleanupHandler: @Sendable @escaping () async -> Void) {
+    init(cleanupHandler: @Sendable @escaping () -> Void) {
         self.cleanupHandler = cleanupHandler
         
         postInit()
@@ -40,28 +40,28 @@ class StorageCleaner {
     
     private func postInit() {
 #if canImport(UIKit)
-        NotificationCenter.default
-            .publisher(for: UIApplication.willResignActiveNotification)
-            .sink { [weak self] _ in
-                self?.cleanupStorage(priority: .userInitiated)
-            }
-            .store(in: &subscriptions)
-        
-        NotificationCenter.default
-            .publisher(for: UIApplication.didReceiveMemoryWarningNotification)
-            .sink { [weak self] _ in
-                self?.cleanupStorage(priority: .medium)
-            }
-            .store(in: &subscriptions)
+//        NotificationCenter.default
+//            .publisher(for: UIApplication.willResignActiveNotification)
+//            .sink { [weak self] _ in
+//                self?.cleanupStorage(priority: .userInitiated)
+//            }
+//            .store(in: &subscriptions)
+//        
+//        NotificationCenter.default
+//            .publisher(for: UIApplication.didReceiveMemoryWarningNotification)
+//            .sink { [weak self] _ in
+//                self?.cleanupStorage(priority: .medium)
+//            }
+//            .store(in: &subscriptions)
 #endif
         
 #if canImport(AppKit)
-        NotificationCenter.default
-            .publisher(for: NSApplication.didResignActiveNotification)
-            .sink { [weak self] _ in
-                self?.cleanupStorage(priority: .userInitiated)
-            }
-            .store(in: &subscriptions)
+//        NotificationCenter.default
+//            .publisher(for: NSApplication.didResignActiveNotification)
+//            .sink { [weak self] _ in
+//                self?.cleanupStorage(priority: .userInitiated)
+//            }
+//            .store(in: &subscriptions)
 #endif
         
         let autoCleanupFrequency = StitcherConfiguration.autoCleanupFrequency
@@ -71,7 +71,7 @@ class StorageCleaner {
         }
         
         Self.didInstantiateDependencySubject
-            .debounce(for: 0.01, scheduler: DispatchQueue.global(qos: .utility))
+            .debounce(for: 0.01, schedulerQos: .utility)
             .collect(autoCleanupFrequency.rawValue)
             .sink { [weak self] _ in
                 self?.cleanupStorage(priority: .low)
@@ -79,13 +79,13 @@ class StorageCleaner {
             .store(in: &subscriptions)
     }
     
-    private func cleanupStorage(priority: TaskPriority = .low) {
+    private func cleanupStorage(priority: AsyncTask.Priority = .low) {
 #if DEBUG
-        Self.cleaupRequestsCount += 1
+        Self.cleanupRequestsCount += 1
 #endif
         
-        Task(priority: priority) {
-            await cleanupHandler()
+        AsyncTask(priority: priority) {
+            self.cleanupHandler()
         }
     }
     

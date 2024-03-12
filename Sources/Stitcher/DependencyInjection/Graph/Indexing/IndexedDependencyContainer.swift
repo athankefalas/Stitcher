@@ -24,11 +24,12 @@ class IndexedDependencyContainer {
     let lazyInitializationHandler: (RawDependencyRegistration) -> Void
     
     private let configuration: StitcherConfiguration.Snapshot
-    private var subscriptions: Set<AnyCancellable> = []
+    private var subscriptions: Set<AnyPipelineCancellable> = []
     
     init(
         container: DependencyContainer,
-        lazyInitializationHandler: @escaping (RawDependencyRegistration) -> Void
+        lazyInitializationHandler: @escaping (RawDependencyRegistration) -> Void,
+        completion: @escaping () -> Void
     ) {
         
         let configuration = StitcherConfiguration.Snapshot()
@@ -43,47 +44,47 @@ class IndexedDependencyContainer {
         
         self.lazyInitializationHandler = lazyInitializationHandler
         
-        postInit()
+        postInit(completion: completion)
     }
     
-    init(
-        container: DependencyContainer,
-        lazyInitializationHandler: @escaping (RawDependencyRegistration) -> Void
-    ) async {
-        
-        let configuration = StitcherConfiguration.Snapshot()
-        
-        self.updateTime = Date()
-        self.indexing = configuration.isIndexingEnabled
-        self.container = container
-        self.configuration = configuration
-        self.registrationIndex = configuration.isIndexingEnabled ? Dictionary(
-            minimumCapacity: max(configuration.approximateDependencyCount, container.registrar.count)
-        ) : [:]
-        
-        self.lazyInitializationHandler = lazyInitializationHandler
-        
-        await postInit()
-    }
+//    init(
+//        container: DependencyContainer,
+//        lazyInitializationHandler: @escaping (RawDependencyRegistration) -> Void
+//    ) async {
+//        
+//        let configuration = StitcherConfiguration.Snapshot()
+//        
+//        self.updateTime = Date()
+//        self.indexing = configuration.isIndexingEnabled
+//        self.container = container
+//        self.configuration = configuration
+//        self.registrationIndex = configuration.isIndexingEnabled ? Dictionary(
+//            minimumCapacity: max(configuration.approximateDependencyCount, container.registrar.count)
+//        ) : [:]
+//        
+//        self.lazyInitializationHandler = lazyInitializationHandler
+//        
+//        await postInit()
+//    }
     
     deinit {
         deactivate()
     }
     
-    private func postInit() {
-        Task(priority: .high) {
-            await postInit()
+    private func postInit(completion: @escaping () -> Void) {
+        AsyncTask(priority: .high) { [weak self] in
+            
+            guard let self = self else { return }
+            
+            guard self.configuration.isIndexingEnabled else {
+                return self.initializeEagerDependenciesWithoutIndexing()
+            }
+            
+            self.observeContainerChanges()
+            self.startIndexing(at: updateTime)
+        } completion: {
+            completion()
         }
-    }
-    
-    private func postInit() async {
-        
-        guard configuration.isIndexingEnabled else {
-            return initializeEagerDependenciesWithoutIndexing()
-        }
-        
-        observeContainerChanges()
-        await startIndexing(at: updateTime)
     }
     
     private func initializeEagerDependenciesWithoutIndexing() {
@@ -100,14 +101,15 @@ class IndexedDependencyContainer {
     
     private func observeContainerChanges() {
         container.dependenciesRegistrarChangesPublisher
-            .debounce(for: 0.0, scheduler: DispatchQueue.global(qos: .userInitiated))
+            .erasedToAnyPipeline()
+            .debounce(for: 0.0, schedulerQos: .background)
             .sink { [weak self] changeSet in
                 self?.containerDidChange(changeSet)
             }
             .store(in: &subscriptions)
     }
     
-    private func startIndexing(at time: Date) async {
+    private func startIndexing(at time: Date) {
         indexing = true
         
         defer {
@@ -148,19 +150,21 @@ class IndexedDependencyContainer {
         let shouldAttemptIncrementalReindexing = !reindex && !registrationIndex.isEmpty
         
         guard shouldAttemptIncrementalReindexing else {
-            Task(priority: .high) {
-                await startIndexing(at: updateTime)
+            AsyncTask(priority: .high) { [weak self] in
+                guard let self = self else { return }
+                self.startIndexing(at: self.updateTime)
             }
             
             return
         }
         
-        Task(priority: .high) {
-            await indexIncrementally(at: updateTime, changes: changes)
+        AsyncTask(priority: .high) { [weak self] in
+            guard let self = self else { return }
+            self.indexIncrementally(at: self.updateTime, changes: changes)
         }
     }
     
-    private func indexIncrementally(at time: Date, changes: DependencyContainer.ChangeSet) async {
+    private func indexIncrementally(at time: Date, changes: DependencyContainer.ChangeSet) {
         indexing = true
         
         defer {

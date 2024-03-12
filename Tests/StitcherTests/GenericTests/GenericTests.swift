@@ -40,16 +40,16 @@ final class GenericTests: XCTestCase {
     }
     
     func test_autoCleanup_isCalled() async {
-        XCTAssert(StorageCleaner.cleaupRequestsCount == 0)
+        XCTAssert(StorageCleaner.cleanupRequestsCount == 0)
         
         let count = max(1, StitcherConfiguration.autoCleanupFrequency.rawValue) + 1
         
         for _ in 1...count {
             StorageCleaner.didInstantiateDependency()
-            await delay(0.01)
+            await delay(0.02)
         }
         
-        XCTAssert(StorageCleaner.cleaupRequestsCount > 0)
+        XCTAssert(StorageCleaner.cleanupRequestsCount > 0)
     }
     
     func delay(_ delayInterval: TimeInterval) async {

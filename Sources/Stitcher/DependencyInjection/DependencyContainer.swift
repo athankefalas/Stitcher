@@ -6,7 +6,11 @@
 //
 
 import Foundation
+import OpenCombine
+
+#if canImport(Combine)
 import Combine
+#endif
 
 #if canImport(Observation)
 import Observation
@@ -71,10 +75,10 @@ public final class DependencyContainer: Identifiable, Equatable {
     @Atomic
     private var dependenciesRegistrar: DependenciesRegistrar
     private var dependenciesRegistrarProvider: () -> DependenciesRegistrar
-    private let invalidateDependenciesSubject = PassthroughSubject<Void, Never>()
+    private let invalidateDependenciesSubject = PipelineSubject<Void>()
     
-    private let dependenciesRegistrarChangesSubject = PassthroughSubject<ChangeSet, Never>()
-    private var subscriptions: Set<AnyCancellable> = []
+    private let dependenciesRegistrarChangesSubject = PipelineSubject<ChangeSet>()
+    private var subscriptions: Set<AnyPipelineCancellable> = []
     
     /// The identity of this dependency container instance.
     public var id: AnyHashable {
@@ -85,8 +89,8 @@ public final class DependencyContainer: Identifiable, Equatable {
         return dependenciesRegistrar
     }
     
-    var dependenciesRegistrarChangesPublisher: AnyPublisher<ChangeSet, Never> {
-        dependenciesRegistrarChangesSubject.eraseToAnyPublisher()
+    var dependenciesRegistrarChangesPublisher: AnyPipeline<ChangeSet> {
+        dependenciesRegistrarChangesSubject.erasedToAnyPipeline()
     }
     
     /// Initializes a dependency container with the given dependency registrations provider closure.
@@ -131,7 +135,7 @@ public final class DependencyContainer: Identifiable, Equatable {
         invalidateDependenciesSubject
             .debounce(
                 for: 0.001,
-                scheduler: DispatchQueue.global(qos: .background)
+                schedulerQos: .background
             )
             .sink { [weak self] _ in
                 self?.invalidateDependenciesRegistrar()
@@ -141,7 +145,7 @@ public final class DependencyContainer: Identifiable, Equatable {
     
     private func startObservingChanges() {
 #if canImport(Observation)
-        if #available(macOS 14.0, iOS 17.0, watchOS 10.0, tvOS 17.0, *) {
+        if #available(macOS 14.0, iOS 17.0, watchOS 10.0, tvOS 17.0, visionOS 1.0, *) {
             let undecoratedDependenciesRegistrarProvider = dependenciesRegistrarProvider
             self.dependenciesRegistrarProvider = {
                 withObservationTracking {
@@ -172,16 +176,12 @@ public final class DependencyContainer: Identifiable, Equatable {
         return registrar.registrations(matching: proposal)
     }
     
-    /// Modifies this container so that it dependency registrations provider closure will be invalidated when the given publisher fires.
-    /// - Parameter publisher: A publisher that notifies this dependency container that it's dependency registrations have been invalidated.
-    /// - Returns: This dependency container instance with an added invalidation observation.
-    public func invalidated<SomePublisher: Publisher>(
+    func invalidated<SomePublisher: Pipeline>(
         tracking publisher: SomePublisher
-    ) -> DependencyContainer
-    where SomePublisher.Failure == Never {
+    ) -> DependencyContainer {
         
         publisher
-            .debounce(for: 0.0, scheduler: DispatchQueue.global(qos: .background))
+            .debounce(for: 0.0, schedulerQos: .background)
             .sink { [weak self] _ in
                 self?.invalidateDependenciesSubject.send()
             }
@@ -231,10 +231,39 @@ public extension DependencyContainer {
         self.init(merging: [first, second] + others)
     }
     
+    /// An empty dependency container.
+    static var empty: DependencyContainer {
+        DependencyContainer()
+    }
+}
+
+
+// MARK: DependencyContainer + Combine
+
+public extension DependencyContainer {
+    
+#if canImport(Combine)
+    
+    /// Modifies this container so that it dependency registrations provider closure will be invalidated when the given publisher fires.
+    /// - Parameter publisher: A publisher that notifies this dependency container that it's dependency registrations have been invalidated.
+    /// - Returns: This dependency container instance with an added invalidation observation.
+    @available(iOS 13.0, macOS 10.15, macCatalyst 13.0, tvOS 13.0, watchOS 6.0, visionOS 1.0, *)
+    func invalidated<SomePublisher: Combine.Publisher>(
+        tracking publisher: SomePublisher
+    ) -> DependencyContainer
+    where SomePublisher.Failure == Never {
+        
+        return invalidated(
+            tracking: publisher.erasedToAnyPipeline()
+        )
+    }
+   
+
     /// Modifies this container so that it dependency registrations provider closure will be invalidated when the given object changes.
     /// - Parameter object: The observable object to track
     /// - Returns: This dependency container instance with an added invalidation observation.
-    func invalidated<SomeObject: ObservableObject>(
+    @available(iOS 13.0, macOS 10.15, macCatalyst 13.0, tvOS 13.0, watchOS 6.0, visionOS 1.0, *)
+    func invalidated<SomeObject: Combine.ObservableObject>(
         tracking object: SomeObject
     ) -> DependencyContainer {
         return self.invalidated(
@@ -242,8 +271,30 @@ public extension DependencyContainer {
         )
     }
     
-    /// An empty dependency container.
-    static var empty: DependencyContainer {
-        DependencyContainer()
+#endif
+    
+    /// Modifies this container so that it dependency registrations provider closure will be invalidated when the given publisher fires.
+    /// - Parameter publisher: A publisher that notifies this dependency container that it's dependency registrations have been invalidated.
+    /// - Returns: This dependency container instance with an added invalidation observation.
+    func invalidated<SomePublisher: OpenCombine.Publisher>(
+        tracking publisher: SomePublisher
+    ) -> DependencyContainer
+    where SomePublisher.Failure == Never {
+        
+        return invalidated(
+            tracking: publisher.erasedToAnyPipeline()
+        )
+    }
+   
+
+    /// Modifies this container so that it dependency registrations provider closure will be invalidated when the given object changes.
+    /// - Parameter object: The observable object to track
+    /// - Returns: This dependency container instance with an added invalidation observation.
+    func invalidated<SomeObject: OpenCombine.ObservableObject>(
+        tracking object: SomeObject
+    ) -> DependencyContainer {
+        return self.invalidated(
+            tracking: object.objectWillChange
+        )
     }
 }

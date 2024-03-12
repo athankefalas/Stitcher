@@ -7,6 +7,11 @@
 
 import Foundation
 import OrderedCollections
+import OpenCombine
+
+#if canImport(Combine)
+import Combine
+#endif
 
 /// A type that contains all active `DependencyContainers` and can be used to inject dependencies.
 public enum DependencyGraph {
@@ -18,13 +23,12 @@ public enum DependencyGraph {
     private static var instanceStorage: [InstanceStorageKey : AnyInstanceStorage] = [:]
     
     @Atomic
-    private static var subscriptions: [AnyHashable : AnyCancellable] = [:]
+    private static var subscriptions: [AnyHashable : AnyPipelineCancellable] = [:]
     
-    private static let graphChangedSubject = PassthroughSubject<Void, Never>()
+    private static let graphChangedSubject = PipelineSubject<Void>()
     
-    /// A publisher that fires when the dependeny graph changes
-    public static var graphChangedPublisher: AnyPublisher<Void, Never> {
-        graphChangedSubject.eraseToAnyPublisher()
+    static var graphChangedPipeline: AnyPipeline<Void> {
+        graphChangedSubject.erasedToAnyPipeline()
     }
     
     private static let storageCleaner = StorageCleaner {
@@ -36,7 +40,8 @@ public enum DependencyGraph {
     /// Activates the given dependency container
     /// - Parameter container: The dependency container to activate
     public static func activate(
-        _ container: DependencyContainer
+        _ container: DependencyContainer,
+        completion: @escaping () -> Void = {}
     ) {
         
         let id = container.id
@@ -50,7 +55,8 @@ public enum DependencyGraph {
         
         activeContainers[id] = IndexedDependencyContainer(
             container: container,
-            lazyInitializationHandler: initializeLazyDependency(registration:)
+            lazyInitializationHandler: initializeLazyDependency(registration:),
+            completion: completion
         )
         
         graphChangedSubject.send()
@@ -59,6 +65,7 @@ public enum DependencyGraph {
     
     /// Activates the given dependency container
     /// - Parameter container: The dependency container to activate
+    @available(iOS 13.0, macOS 10.15, macCatalyst 13.0, tvOS 13.0, watchOS 6.0, visionOS 1.0, *)
     public static func activate(
         _ container: DependencyContainer
     ) async {
@@ -74,7 +81,8 @@ public enum DependencyGraph {
         
         activeContainers[id] = await IndexedDependencyContainer(
             container: container,
-            lazyInitializationHandler: initializeLazyDependency(registration:)
+            lazyInitializationHandler: initializeLazyDependency(registration:),
+            completion: {}
         )
         
         graphChangedSubject.send()
@@ -117,7 +125,7 @@ public enum DependencyGraph {
     }
     
     public static func releaseUnusedStorage() {
-        Task {
+        AsyncTask {
             let keys = Set(instanceStorage.keys)
             
             for key in keys {
@@ -269,3 +277,36 @@ public enum DependencyGraph {
         return typedDependency
     }
 }
+
+// MARK: DependencyGraph + Combine
+
+public extension DependencyGraph {
+    
+#if canImport(Combine)
+    
+    /// A publisher that fires when the dependeny graph changes
+    @available(iOS 13.0, macOS 10.15, macCatalyst 13.0, tvOS 13.0, watchOS 6.0, visionOS 1.0, *)
+    static var graphChangedPublisher: Combine.AnyPublisher<Void, Never> {
+        guard let provider = graphChangedPipeline.erasedProvider as? Combine.AnyPublisher<Void, Never> else {
+            return Empty().eraseToAnyPublisher()
+        }
+        
+        return provider
+    }
+    
+
+#else
+    
+    /// A publisher that fires when the dependeny graph changes
+    static var graphChangedPublisher: OpenCombine.AnyPublisher<Void, Never> {
+        guard let provider = graphChangedPipeline.erasedProvider as? OpenCombine.AnyPublisher<Void, Never> else {
+            return Empty().eraseToAnyPublisher()
+        }
+        
+        return provider
+    }
+    
+#endif
+}
+
+

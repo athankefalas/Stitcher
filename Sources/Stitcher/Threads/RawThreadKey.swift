@@ -14,8 +14,8 @@ class RawThreadKey<Value> {
     init() {
         pthreadKey = pthread_key_t()
         pthread_key_create(&pthreadKey) { destructor in
-            guard let rawPointer = (destructor as UnsafeMutableRawPointer?) else { return }
-            Unmanaged<AnyObject>.fromOpaque(rawPointer).release()
+            guard let rawPointer = destructor as UnsafeMutableRawPointer? else { return }
+            rawPointer.deallocate()
         }
     }
     
