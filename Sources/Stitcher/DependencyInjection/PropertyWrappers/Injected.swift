@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import Combine
 
 /// A property wrapper that injects the desired dependency in it's wrapped value when it is first requested.
 ///

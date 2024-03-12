@@ -8,20 +8,27 @@ let package = Package(
     platforms: [
         .iOS(.v13),
         .macOS(.v10_15),
+        .macCatalyst(.v13),
         .tvOS(.v13),
         .watchOS(.v6),
+        .visionOS(.v1)
     ],
     products: [
         // Products define the executables and libraries a package produces, and make them visible to other packages.
         .library(
             name: "Stitcher",
-            targets: ["Stitcher"]),
+            targets: ["Stitcher"]
+        ),
     ],
     dependencies: [
         .package(
-              url: "https://github.com/apple/swift-collections.git",
-              .upToNextMinor(from: "1.1.0")
-            )
+            url: "https://github.com/apple/swift-collections.git",
+            .upToNextMinor(from: "1.1.0")
+        ),
+        .package(
+            url: "https://github.com/OpenCombine/OpenCombine.git",
+            exact: "0.14.0"
+        )
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -29,11 +36,25 @@ let package = Package(
         .target(
             name: "Stitcher",
             dependencies: [
-                    .product(name: "Collections", package: "swift-collections")
-                  ]
+                .product(
+                    name: "Collections",
+                    package: "swift-collections"
+                ),
+                .product(
+                    name: "OpenCombine",
+                    package: "OpenCombine"
+                ),
+                .product(
+                    name: "OpenCombineDispatch",
+                    package: "OpenCombine"
+                )
+            ]
         ),
         .testTarget(
             name: "StitcherTests",
-            dependencies: ["Stitcher"]),
+            dependencies: [
+                "Stitcher"
+            ]
+        )
     ]
 )

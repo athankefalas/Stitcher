@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import Combine
 
 /// The scope or lifetime of a dependency instance.
 public enum DependencyScope: Hashable {

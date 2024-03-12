@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import Combine
 
 class ManagedSingletonInstanceStorage<Value: AnyObject>: InstanceStorage {
     

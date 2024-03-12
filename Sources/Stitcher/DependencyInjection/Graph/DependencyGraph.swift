@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import Combine
 import OrderedCollections
 
 /// A type that contains all active `DependencyContainers` and can be used to inject dependencies.

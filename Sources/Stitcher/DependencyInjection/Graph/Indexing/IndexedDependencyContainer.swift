@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import Combine
 import OrderedCollections
 
 /// A wrapper that holds a `DependencyContainer` and indexes it's registrar asynchronously
