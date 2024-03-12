@@ -58,6 +58,16 @@ final class AnyPipelineCancellable: Hashable {
         hasher.combine(providerHashcode)
     }
     
+    static func == (lhs: AnyPipelineCancellable, rhs: AnyPipelineCancellable) -> Bool {
+        lhs.hashValue == rhs.hashValue
+    }
+}
+
+
+// MARK: Store In Extensions
+
+extension AnyPipelineCancellable {
+    
     func store<Storage: RangeReplaceableCollection>(
         in collection: inout Storage
     ) where Storage.Element == AnyPipelineCancellable {
@@ -69,8 +79,25 @@ final class AnyPipelineCancellable: Hashable {
     ) {
         set.insert(self)
     }
+}
+
+#if canImport(Combine)
+import Combine
+
+@available(iOS 13.0, macOS 10.15, macCatalyst 13.0, tvOS 13.0, watchOS 6.0, visionOS 1.0, *)
+extension Combine.AnyCancellable {
     
-    static func == (lhs: AnyPipelineCancellable, rhs: AnyPipelineCancellable) -> Bool {
-        lhs.hashValue == rhs.hashValue
+    func store<Storage: RangeReplaceableCollection>(
+        in collection: inout Storage
+    ) where Storage.Element == AnyPipelineCancellable {
+        collection.append(AnyPipelineCancellable(self))
+    }
+    
+    func store(
+        in set: inout Set<AnyPipelineCancellable>
+    ) {
+        set.insert(AnyPipelineCancellable(self))
     }
 }
+
+#endif

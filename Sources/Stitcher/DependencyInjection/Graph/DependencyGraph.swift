@@ -63,32 +63,6 @@ public enum DependencyGraph {
         storageCleaner.didInstantiateDependency()
     }
     
-    /// Activates the given dependency container
-    /// - Parameter container: The dependency container to activate
-    @available(iOS 13.0, macOS 10.15, macCatalyst 13.0, tvOS 13.0, watchOS 6.0, visionOS 1.0, *)
-    public static func activate(
-        _ container: DependencyContainer
-    ) async {
-        
-        let id = container.id
-        subscriptions[id] = container.dependenciesRegistrarChangesPublisher
-            .sink { changes in
-                dependencyContainer(
-                    id: id,
-                    changedWith: changes
-                )
-            }
-        
-        activeContainers[id] = await IndexedDependencyContainer(
-            container: container,
-            lazyInitializationHandler: initializeLazyDependency(registration:),
-            completion: {}
-        )
-        
-        graphChangedSubject.send()
-        storageCleaner.didInstantiateDependency()
-    }
-    
     /// Deactivates the given dependency container
     /// - Parameter container: The dependency container to deactivate
     public static func deactivate(
@@ -309,4 +283,38 @@ public extension DependencyGraph {
 #endif
 }
 
+// MARK: DependencyGraph + Async
+
+@available(iOS 13.0, macOS 10.15, macCatalyst 13.0, tvOS 13.0, watchOS 6.0, visionOS 1.0, *)
+public extension DependencyGraph {
+    
+    /// Activates the given dependency container and waits for indexing to complete.
+    /// - Parameter container: The dependency container to activate
+    static func activate(
+        _ container: DependencyContainer
+    ) async {
+        
+        await withUnsafeContinuation { continuation in
+            let id = container.id
+            subscriptions[id] = container.dependenciesRegistrarChangesPublisher
+                .sink { changes in
+                    dependencyContainer(
+                        id: id,
+                        changedWith: changes
+                    )
+                }
+            
+            activeContainers[id] = IndexedDependencyContainer(
+                container: container,
+                lazyInitializationHandler: initializeLazyDependency(registration:),
+                completion: {
+                    graphChangedSubject.send()
+                    storageCleaner.didInstantiateDependency()
+                    
+                    continuation.resume()
+                }
+            )
+        }
+    }
+}
 

@@ -7,12 +7,14 @@
 
 import Foundation
 
-#if canImport(UIKit)
+#if canImport(UIKit) && canImport(Combine)
 import UIKit
+import Combine
 #endif
 
-#if canImport(AppKit)
+#if canImport(AppKit) && canImport(Combine)
 import AppKit
+import Combine
 #endif
 
 class StorageCleaner {
@@ -39,29 +41,33 @@ class StorageCleaner {
     }
     
     private func postInit() {
-#if canImport(UIKit)
-//        NotificationCenter.default
-//            .publisher(for: UIApplication.willResignActiveNotification)
-//            .sink { [weak self] _ in
-//                self?.cleanupStorage(priority: .userInitiated)
-//            }
-//            .store(in: &subscriptions)
-//        
-//        NotificationCenter.default
-//            .publisher(for: UIApplication.didReceiveMemoryWarningNotification)
-//            .sink { [weak self] _ in
-//                self?.cleanupStorage(priority: .medium)
-//            }
-//            .store(in: &subscriptions)
+#if canImport(UIKit) && canImport(Combine)
+        if #available(iOS 13.0, macOS 10.15, macCatalyst 13.0, tvOS 13.0, watchOS 6.0, visionOS 1.0, *) {
+            NotificationCenter.default
+                .publisher(for: UIApplication.willResignActiveNotification)
+                .sink { [weak self] _ in
+                    self?.cleanupStorage(priority: .high)
+                }
+                .store(in: &subscriptions)
+            
+            NotificationCenter.default
+                .publisher(for: UIApplication.didReceiveMemoryWarningNotification)
+                .sink { [weak self] _ in
+                    self?.cleanupStorage(priority: .medium)
+                }
+                .store(in: &subscriptions)
+        }
 #endif
         
-#if canImport(AppKit)
-//        NotificationCenter.default
-//            .publisher(for: NSApplication.didResignActiveNotification)
-//            .sink { [weak self] _ in
-//                self?.cleanupStorage(priority: .userInitiated)
-//            }
-//            .store(in: &subscriptions)
+#if canImport(AppKit) && canImport(Combine)
+        if #available(iOS 13.0, macOS 10.15, macCatalyst 13.0, tvOS 13.0, watchOS 6.0, visionOS 1.0, *) {
+            NotificationCenter.default
+                .publisher(for: NSApplication.didResignActiveNotification)
+                .sink { [weak self] _ in
+                    self?.cleanupStorage(priority: .high)
+                }
+                .store(in: &subscriptions)
+        }
 #endif
         
         let autoCleanupFrequency = StitcherConfiguration.autoCleanupFrequency

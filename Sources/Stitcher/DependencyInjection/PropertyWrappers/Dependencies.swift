@@ -65,9 +65,40 @@ public struct Dependencies {
     }
     
     /// Sets the managed dependency container waiting for activation **and** indexing.
+    /// - Parameters:
+    ///   - newValue: The new dependency container to activate.
+    ///   - completion: The completion closure to call when the container is activated and indexed.
+    public mutating func setContainer(
+        _ newValue: DependencyContainer,
+        completion: @escaping () -> Void
+    ) {
+        guard newValue !== storage.container else {
+            return
+        }
+        
+        DependencyGraph.deactivate(storage.container)
+        storage.container = newValue
+        
+        DependencyGraph.activate(
+            storage.container,
+            completion: completion
+        )
+    }
+    
+    public init(wrappedValue: DependencyContainer = .empty) {
+        self.storage = Storage(container: wrappedValue)
+        DependencyGraph.activate(wrappedValue)
+    }
+}
+
+// MARK: Dependencies + Concurrency
+
+public extension Dependencies {
+    
+    /// Sets the managed dependency container waiting for activation **and** indexing.
     /// - Parameter newValue: The new dependency container to activate.
     @available(iOS 13.0, macOS 10.15, macCatalyst 13.0, tvOS 13.0, watchOS 6.0, visionOS 1.0, *)
-    public mutating func setContainer(_ newValue: DependencyContainer) async {
+    mutating func setContainer(_ newValue: DependencyContainer) async {
         guard newValue !== storage.container else {
             return
         }
@@ -76,10 +107,5 @@ public struct Dependencies {
         storage.container = newValue
         
         await DependencyGraph.activate(storage.container)
-    }
-    
-    public init(wrappedValue: DependencyContainer = .empty) {
-        self.storage = Storage(container: wrappedValue)
-        DependencyGraph.activate(wrappedValue)
     }
 }
