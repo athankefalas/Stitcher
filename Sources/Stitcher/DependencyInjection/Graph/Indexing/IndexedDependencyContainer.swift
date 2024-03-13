@@ -47,26 +47,6 @@ class IndexedDependencyContainer {
         postInit(completion: completion)
     }
     
-//    init(
-//        container: DependencyContainer,
-//        lazyInitializationHandler: @escaping (RawDependencyRegistration) -> Void
-//    ) async {
-//        
-//        let configuration = StitcherConfiguration.Snapshot()
-//        
-//        self.updateTime = Date()
-//        self.indexing = configuration.isIndexingEnabled
-//        self.container = container
-//        self.configuration = configuration
-//        self.registrationIndex = configuration.isIndexingEnabled ? Dictionary(
-//            minimumCapacity: max(configuration.approximateDependencyCount, container.registrar.count)
-//        ) : [:]
-//        
-//        self.lazyInitializationHandler = lazyInitializationHandler
-//        
-//        await postInit()
-//    }
-    
     deinit {
         deactivate()
     }
