@@ -7,7 +7,7 @@
 
 import Foundation
 
-class AsyncTask {
+class AsyncTask: CancellableTask {
     
     static var _prefersSwiftConcurrency = true
     

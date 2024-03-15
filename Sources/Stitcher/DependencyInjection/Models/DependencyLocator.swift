@@ -140,7 +140,9 @@ public struct DependencyLocator: Hashable {
         }
     }
     
-    func indexingKeys() -> Set<IndexingKey> {
+    /// A set of keys that the dependency can be indexed by
+    /// - Returns: A set of distinct indexing keys
+    public func indexingKeys() -> Set<IndexingKey> {
         return indexingkeys
     }
     
