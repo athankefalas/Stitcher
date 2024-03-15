@@ -7,7 +7,9 @@
 
 import Foundation
 
-struct AsyncTask {
+class AsyncTask {
+    
+    static var _prefersSwiftConcurrency = true
     
     enum Priority {
         case low
@@ -27,37 +29,80 @@ struct AsyncTask {
         }
     }
     
+    private class QueueSet {
+        
+        private static var defaultQueueCount: Int {
+            let processInfo = ProcessInfo()
+            return processInfo.processorCount - 1
+        }
+        
+        private var index: Int
+        private var queues: [DispatchQueue]
+        private var semaphore = DispatchSemaphore(value: 1)
+        
+        var queue: DispatchQueue {
+            semaphore.wait()
+            
+            defer {
+                semaphore.signal()
+            }
+            
+            var nextIndex = index + 1
+            
+            if !queues.indices.contains(nextIndex) {
+                nextIndex = 0
+            }
+            
+            index = nextIndex
+            return queues[nextIndex]
+        }
+        
+        init(priority: DispatchQoS, count: Int? = nil) {
+            let count = max(count ?? Self.defaultQueueCount, 1)
+            self.index = -1
+            self.queues = (0..<count).map { queueId in
+                let label = "com.stitcher.AsyncTask.\(priority)-priority-queue.\(queueId)"
+                return DispatchQueue(
+                    label: label,
+                    qos: priority
+                )
+            }
+        }
+    }
+    
+    @ThreadLocal
+    private static var currentTask: AsyncTask? = nil
+    
     @ThreadLocal
     private static var currentPriority: Priority = .high
     
-    private static let lowPriorityQueue = DispatchQueue(
-        label: "com.stitcher.AsyncTask.low-priority-queue",
-        qos: .background
-    )
-    
-    private static let mediumPriorityQueue = DispatchQueue(
-        label: "com.stitcher.AsyncTask.medium-priority-queue",
-        qos: .default
-    )
-    
-    private static let highPriorityQueue = DispatchQueue(
-        label: "com.stitcher.AsyncTask.high-priority-queue",
-        qos: .userInitiated
-    )
+    private static let lowPriorityQueues = QueueSet(priority: .background)
+    private static let mediumPriorityQueues = QueueSet(priority: .default)
+    private static let highPriorityQueues = QueueSet(priority: .userInitiated)
     
     private static func queue(for priority: Priority) -> DispatchQueue {
         switch priority {
         case .low:
-            return lowPriorityQueue
+            return lowPriorityQueues.queue
         case .medium:
-            return mediumPriorityQueue
+            return mediumPriorityQueues.queue
         case .high:
-            return highPriorityQueue
+            return highPriorityQueues.queue
         }
     }
     
     private let provider: Any
-    private let cancel: () -> Void
+    private var isCancelled = false
+    private let _cancel: () -> Void
+    
+    static var isCancelled: Bool {
+        if #available(iOS 13.0, macOS 10.15, macCatalyst 13.0, tvOS 13.0, watchOS 6.0, visionOS 1.0, *),
+           Self._prefersSwiftConcurrency {
+            return Task.isCancelled
+        } else {
+            return Self.currentTask?.isCancelled ?? false
+        }
+    }
     
     @discardableResult
     init<TaskResult>(
@@ -66,7 +111,9 @@ struct AsyncTask {
         completion: @Sendable @escaping (TaskResult) -> Void = {_ in }
     ) {
         
-        if #available(iOS 13.0, macOS 10.15, macCatalyst 13.0, tvOS 13.0, watchOS 6.0, visionOS 1.0, *) {
+        if #available(iOS 13.0, macOS 10.15, macCatalyst 13.0, tvOS 13.0, watchOS 6.0, visionOS 1.0, *),
+           Self._prefersSwiftConcurrency {
+            
             let task = Task(priority: priority?.taskPriority) {
                 let result = operation()
                 
@@ -78,7 +125,7 @@ struct AsyncTask {
             }
             
             self.provider = task
-            self.cancel = {
+            self._cancel = {
                 task.cancel()
             }
             
@@ -88,13 +135,19 @@ struct AsyncTask {
             let canceller = Atomic(initialValue: false)
             
             self.provider = (queue, canceller)
-            self.cancel = {
+            self._cancel = {
                 canceller.wrappedValue = true
             }
             
             queue.async {
-                let result = Self.$currentPriority.withValue(priority) {
-                    operation()
+                guard !canceller.wrappedValue else {
+                    return
+                }
+                
+                let result = Self.$currentTask.withValue(self) {
+                    Self.$currentPriority.withValue(priority) {
+                        operation()
+                    }
                 }
                 
                 guard !canceller.wrappedValue else {
@@ -104,5 +157,10 @@ struct AsyncTask {
                 completion(result)
             }
         }
+    }
+    
+    func cancel() {
+        isCancelled = true
+        _cancel()
     }
 }

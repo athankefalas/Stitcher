@@ -26,6 +26,7 @@ struct ThreadIdentifier: Hashable, CustomStringConvertible {
 
 class ThreadStorage<Value>: CustomStringConvertible {
     
+    @Atomic
     private var entries: [ThreadIdentifier : Value] = [:]
     
     var description: String {
@@ -48,7 +49,6 @@ final class ThreadLocal<Value> {
     
     final let defaultValue: Value
     
-    @Atomic
     private var storage = ThreadStorage<Value>()
     
     final var wrappedValue: Value {
