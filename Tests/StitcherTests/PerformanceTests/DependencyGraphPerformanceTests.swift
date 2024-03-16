@@ -45,20 +45,22 @@ final class DependencyGraphPerformanceTests: XCTestCase {
             }
         }
         
+        var indexedContainer: IndexedDependencyContainer?
+        
         measure { // Baseline: 100_000 @ 0,369 s
             let expectation = XCTestExpectation()
-            let indexedContainer = IndexedDependencyContainer(
+            indexedContainer = IndexedDependencyContainer(
                 container: container,
-                lazyInitializationHandler: {_ in }, completion: {}
+                lazyInitializationHandler: {_ in },
+                completion: {
+                    expectation.fulfill()
+                }
             )
-            
-            Task {
-                await self.backoff(until: !indexedContainer.indexing)
-                expectation.fulfill()
-            }
             
             wait(for: [expectation])
         }
+        
+        indexedContainer?.deactivate()
     }
     
     func test_dependencyGraph_lookup() async throws {

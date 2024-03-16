@@ -25,8 +25,10 @@ public extension DependencyGraph {
             byType: SomeDependecy.self
         )
         
-        let registrations = dependencyRegistrations(matching: locatorMatchProposal)
-            .filter( { $0.factory.parameters.isSatisfied(by: parameters) })
+        let registrations = dependencyRegistrations(
+            matching: locatorMatchProposal,
+            parameters: parameters
+        )
         
         guard let registration = registrations.first else {
             throw InjectionError.missingDependency(.type("\(type)"))
@@ -58,8 +60,10 @@ public extension DependencyGraph {
             byType: SomeDependecy.self
         )
         
-        let registrations = dependencyRegistrations(matching: locatorMatchProposal)
-            .filter( { $0.factory.parameters.isSatisfied(by: parameters) })
+        let registrations = dependencyRegistrations(
+            matching: locatorMatchProposal,
+            parameters: parameters
+        )
         
         let dependencies = try registrations.map { registration in
             return try instantiateDependency(
@@ -87,8 +91,10 @@ public extension DependencyGraph {
             byType: SomeDependecy.self
         )
         
-        let registrations = dependencyRegistrations(matching: locatorMatchProposal)
-            .filter( { $0.factory.parameters.isSatisfied(by: parameters) })
+        let registrations = dependencyRegistrations(
+            matching: locatorMatchProposal,
+            parameters: parameters
+        )
         
         guard let registration = registrations.first else {
             return nil
@@ -122,8 +128,10 @@ public extension DependencyGraph {
             byType: SomeDependecy.self
         )
         
-        let registrations = dependencyRegistrations(matching: locatorMatchProposal)
-            .filter( { $0.factory.parameters.isSatisfied(by: parameters) })
+        let registrations = dependencyRegistrations(
+            matching: locatorMatchProposal,
+            parameters: parameters
+        )
         
         let dependencies = try registrations.map { registration in
             return try instantiateDependency(

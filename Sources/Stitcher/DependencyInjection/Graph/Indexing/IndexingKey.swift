@@ -7,12 +7,14 @@
 
 import Foundation
 
-/// A key used to index dependencies in order to decrease lookup time
+/// A key used to index dependencies in order to decrease lookup time.
+///
+/// A set of indexing keys can be retrieved from a `DependencyLocator`, or a `RawDependencyRegistration`.
 public struct IndexingKey: Hashable {
     
     private let signature: Int
     
-    public init(consuming data: AnyHashable...) {
+    init(consuming data: AnyHashable...) {
         var hasher = Hasher()
         
         for datum in data {

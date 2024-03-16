@@ -24,8 +24,10 @@ public extension DependencyGraph {
             byName: name
         )
         
-        let registrations = dependencyRegistrations(matching: locatorMatchProposal)
-            .filter( { $0.factory.parameters.isSatisfied(by: parameters) })
+        let registrations = dependencyRegistrations(
+            matching: locatorMatchProposal,
+            parameters: parameters
+        )
         
         guard let registration = registrations.first else {
             throw InjectionError.missingDependency(.name(name))
@@ -59,8 +61,10 @@ public extension DependencyGraph {
             byName: name
         )
         
-        let registrations = dependencyRegistrations(matching: locatorMatchProposal)
-            .filter( { $0.factory.parameters.isSatisfied(by: parameters) })
+        let registrations = dependencyRegistrations(
+            matching: locatorMatchProposal,
+            parameters: parameters
+        )
         
         guard let registration = registrations.first else {
             throw InjectionError.missingDependency(.name(name))
@@ -94,8 +98,10 @@ public extension DependencyGraph {
             byName: name
         )
         
-        let registrations = dependencyRegistrations(matching: locatorMatchProposal)
-            .filter( { $0.factory.parameters.isSatisfied(by: parameters) })
+        let registrations = dependencyRegistrations(
+            matching: locatorMatchProposal,
+            parameters: parameters
+        )
         
         guard let registration = registrations.first else {
             throw InjectionError.missingDependency(.name(name))

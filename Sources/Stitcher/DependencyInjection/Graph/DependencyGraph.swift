@@ -159,13 +159,24 @@ public enum DependencyGraph {
     }
     
     static func dependencyRegistrations(
-        matching locator: DependencyLocator.MatchProposal
+        matching locator: DependencyLocator.MatchProposal,
+        parameters: DependencyParameters
     ) -> OrderedSet<RawDependencyRegistration> {
+        var registrations = OrderedSet<RawDependencyRegistration>(
+            minimumCapacity: activeContainers.count
+        )
         
-        let matchingRegistrations = activeContainers.values
-            .flatMap({ $0.dependecyRegistrations(matching: locator) })
+        for container in activeContainers.values {
+            for registration in container.dependecyRegistrations(matching: locator) {
+                guard registration.factory.parameters.isSatisfied(by: parameters) else {
+                    continue
+                }
+                
+                registrations.append(registration)
+            }
+        }
         
-        return OrderedSet(matchingRegistrations)
+        return registrations
     }
     
     @discardableResult

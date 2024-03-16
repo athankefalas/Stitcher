@@ -15,14 +15,14 @@ final class IndexingKeyTests: XCTestCase {
         let locator = DependencyLocator.name(name)
         let proposal = DependencyLocator.MatchProposal(byName: name)
         XCTAssert(locator.indexingKeys().count == 1)
-        XCTAssert(locator.indexingKeys().contains(proposal.indexingKey()))
+        XCTAssert(locator.indexingKeys().contains(proposal.indexingKey))
     }
     
     func test_indexingKey_type() {
         let locator = DependencyLocator.type(Alpha.self)
         let proposal = DependencyLocator.MatchProposal(byType: Alpha.self)
         XCTAssert(locator.indexingKeys().count == 1)
-        XCTAssert(locator.indexingKeys().contains(proposal.indexingKey()))
+        XCTAssert(locator.indexingKeys().contains(proposal.indexingKey))
     }
     
     func test_indexingKey_typeAndProtocol() {
@@ -31,8 +31,8 @@ final class IndexingKeyTests: XCTestCase {
         let protocolProposal = DependencyLocator.MatchProposal(byType: LetterClassImplementing.self)
         
         XCTAssert(locator.indexingKeys().count == 2)
-        XCTAssert(locator.indexingKeys().contains(typeProposal.indexingKey()))
-        XCTAssert(locator.indexingKeys().contains(protocolProposal.indexingKey()))
+        XCTAssert(locator.indexingKeys().contains(typeProposal.indexingKey))
+        XCTAssert(locator.indexingKeys().contains(protocolProposal.indexingKey))
     }
     
     func test_indexingKey_value() {
@@ -40,7 +40,7 @@ final class IndexingKeyTests: XCTestCase {
         let locator = DependencyLocator.value(value)
         let proposal = DependencyLocator.MatchProposal(byValue: value)
         XCTAssert(locator.indexingKeys().count == 1)
-        XCTAssert(locator.indexingKeys().contains(proposal.indexingKey()))
+        XCTAssert(locator.indexingKeys().contains(proposal.indexingKey))
     }
 
 }

@@ -39,6 +39,7 @@ final class GenericTests: XCTestCase {
         XCTAssert(service.isActive)
     }
     
+#if DEBUG
     func test_autoCleanup_isCalled() async {
         XCTAssert(StorageCleaner.cleanupRequestsCount == 0)
         
@@ -51,6 +52,7 @@ final class GenericTests: XCTestCase {
         
         XCTAssert(StorageCleaner.cleanupRequestsCount > 0)
     }
+#endif
     
     func delay(_ delayInterval: TimeInterval) async {
         await withCheckedContinuation { continuation in

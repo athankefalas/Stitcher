@@ -62,6 +62,10 @@ public struct RawDependencyRegistration: Hashable {
         return _storageBox.canInstantiateEagerly
     }
     
+    public var indexingKeys: Set<IndexingKey> {
+        _storageBox.locator.indexingKeys()
+    }
+    
     init(
         locator: DependencyLocator,
         factory: DependencyFactory,
@@ -103,6 +107,6 @@ public struct RawDependencyRegistration: Hashable {
     }
     
     public static func == (lhs: RawDependencyRegistration, rhs: RawDependencyRegistration) -> Bool {
-        lhs.hashValue == rhs.hashValue
+        lhs._storageBox.signature == rhs._storageBox.signature
     }
 }

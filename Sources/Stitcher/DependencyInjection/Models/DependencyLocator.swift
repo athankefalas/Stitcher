@@ -14,6 +14,7 @@ public struct DependencyLocator: Hashable {
     struct MatchProposal: Hashable {
         let kind: Kind
         let wrappedValue: AnyHashable
+        let indexingKey: IndexingKey
         
         private init(
             kind: Kind,
@@ -21,6 +22,7 @@ public struct DependencyLocator: Hashable {
         ) {
             self.kind = kind
             self.wrappedValue = wrappedValue
+            self.indexingKey = IndexingKey(consuming: kind, wrappedValue)
         }
         
         init(
@@ -51,36 +53,6 @@ public struct DependencyLocator: Hashable {
                 wrappedValue: value
             )
         }
-        
-        func indexingKey() -> IndexingKey {
-            IndexingKey(consuming: kind, wrappedValue)
-        }
-        
-        func matchesName(_ name: String) -> Bool {
-            guard kind == .nameLocator,
-                  let proposedName = wrappedValue as? String else {
-                return false
-            }
-            
-            return proposedName.localizedCaseInsensitiveCompare(name) == .orderedSame
-        }
-        
-        func matchesType(_ type: TypeName) -> Bool {
-            guard kind == .typeLocator,
-                  let proposedType = wrappedValue as? TypeName else {
-                return false
-            }
-            
-            return proposedType.rawValue == type.rawValue
-        }
-        
-        func matchesValue(_ value: AnyHashable) -> Bool {
-            guard kind == .valueLocator else {
-                return false
-            }
-            
-            return wrappedValue == value
-        }
     }
     
     enum Kind: Int, Hashable {
@@ -91,17 +63,14 @@ public struct DependencyLocator: Hashable {
     
     private let kind: Kind
     private let signature: AnyHashable
-    private let predicate: Predicate
     private let indexingkeys: Set<IndexingKey>
     
     private init(
         kind: Kind,
-        signature: AnyHashable,
-        predicate: @escaping Predicate
+        signature: AnyHashable
     ) {
         self.kind = kind
         self.signature = signature
-        self.predicate = predicate
         
         if kind == .typeLocator,
            let types = signature as? [TypeName] {
@@ -122,9 +91,7 @@ public struct DependencyLocator: Hashable {
         let typeName = TypeName(of: Supertype.self)
         typeNames.append(typeName)
         
-        return DependencyLocator(kind: .typeLocator, signature: typeNames) { proposal in
-            typeNames.firstIndex(where: { proposal.matchesType($0) }) != nil
-        }
+        return DependencyLocator(kind: .typeLocator, signature: typeNames)
     }
     
     func dependencyContext() -> InjectionError.DependencyContext {
@@ -159,9 +126,7 @@ public struct DependencyLocator: Hashable {
     public static func name(
         _ name: String
     ) -> DependencyLocator {
-        DependencyLocator(kind: .nameLocator, signature: name) { proposal in
-            proposal.matchesName(name)
-        }
+        DependencyLocator(kind: .nameLocator, signature: name)
     }
     
     /// A dependency locator that can be used to query dependencies by a type.
@@ -171,9 +136,7 @@ public struct DependencyLocator: Hashable {
         _ primaryType: PrimaryType.Type
     ) -> DependencyLocator {
         let typeName = TypeName(of: primaryType)
-        return DependencyLocator(kind: .typeLocator, signature: [typeName]) { proposal in
-            proposal.matchesType(typeName)
-        }
+        return DependencyLocator(kind: .typeLocator, signature: [typeName])
     }
     
     /// A dependency locator that can be used to query dependencies by a type and a subtype.
@@ -186,9 +149,7 @@ public struct DependencyLocator: Hashable {
         _ secondaryType: SecondaryType.Type
     ) -> DependencyLocator {
         let typeNames = [TypeName(of: primaryType), TypeName(of: secondaryType)]
-        return DependencyLocator(kind: .typeLocator, signature: typeNames) { proposal in
-            typeNames.firstIndex(where: { proposal.matchesType($0) }) != nil
-        }
+        return DependencyLocator(kind: .typeLocator, signature: typeNames)
     }
     
     /// A dependency locator that can be used to query dependencies by a type and multiple subtypes..
@@ -203,9 +164,7 @@ public struct DependencyLocator: Hashable {
         _ tertiaryType: TertiaryType.Type
     ) -> DependencyLocator {
         let typeNames = [TypeName(of: primaryType), TypeName(of: secondaryType), TypeName(of: tertiaryType)]
-        return DependencyLocator(kind: .typeLocator, signature: typeNames) { proposal in
-            typeNames.firstIndex(where: { proposal.matchesType($0) }) != nil
-        }
+        return DependencyLocator(kind: .typeLocator, signature: typeNames)
     }
     
     /// A dependency locator that can be used to query dependencies by an associated value.
@@ -214,9 +173,7 @@ public struct DependencyLocator: Hashable {
     public static func value<V: Hashable>(
         _ value: V
     ) -> DependencyLocator {
-        DependencyLocator(kind: .valueLocator, signature: value) { proposal in
-            proposal.matchesValue(value)
-        }
+        DependencyLocator(kind: .valueLocator, signature: value)
     }
     
     // MARK: Equatable
@@ -226,10 +183,10 @@ public struct DependencyLocator: Hashable {
     }
     
     static func == (lhs: DependencyLocator, rhs: DependencyLocator.MatchProposal) -> Bool {
-        lhs.predicate(rhs)
+        lhs.indexingkeys.contains(rhs.indexingKey)
     }
     
     static func == (lhs: DependencyLocator.MatchProposal, rhs: DependencyLocator) -> Bool {
-        rhs.predicate(lhs)
+        rhs.indexingkeys.contains(lhs.indexingKey)
     }
 }

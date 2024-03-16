@@ -48,16 +48,21 @@ public enum StitcherConfiguration {
     }
     
     struct Snapshot {
+        let indexer: Indexing
         let isIndexingEnabled: Bool
+        
         let approximateDependencyCount: Int
         let autoCleanupFrequency: AutoCleanupFrequency
         
         init() {
+            self.indexer = StitcherConfiguration.indexerFactory()
             self.isIndexingEnabled = StitcherConfiguration.isIndexingEnabled
             self.approximateDependencyCount = max(StitcherConfiguration.approximateDependencyCount, 100)
             self.autoCleanupFrequency = StitcherConfiguration.autoCleanupFrequency
         }
     }
+    
+    @Atomic public static var indexerFactory: () -> Indexing = { DefaultIndexer() }
     
     /// Controls whether indexing dependencies is enabled.
     ///
@@ -68,7 +73,7 @@ public enum StitcherConfiguration {
     /// 
     /// | Operation | Complexity with Indexing enabled | Complexity with Indexing disabled |
     /// | - | - | - |
-    /// | Container Initialization | O(n^2)  | O(n) |
+    /// | Container Initialization | O(n^2)    | O(n) |
     /// | Dependency Search    | O(1) \*    | O(n) |
     ///
     /// \* On average based on the way the dependency is located. For example, adding type

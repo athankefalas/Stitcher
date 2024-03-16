@@ -95,13 +95,29 @@ class StorageCleaner {
         }
     }
     
-    func didInstantiateDependency() {
-        Self.didInstantiateDependencySubject.send()
+    @inlinable func didInstantiateDependency() {
+        let autoCleanupFrequency = StitcherConfiguration.autoCleanupFrequency
+        
+        guard autoCleanupFrequency != .never else {
+            return
+        }
+        
+        AsyncTask(priority: .low) {
+            Self.didInstantiateDependencySubject.send()
+        }
     }
     
 #if DEBUG
-    static func didInstantiateDependency() {
-        Self.didInstantiateDependencySubject.send()
+    @inlinable static func didInstantiateDependency() {
+        let autoCleanupFrequency = StitcherConfiguration.autoCleanupFrequency
+        
+        guard autoCleanupFrequency != .never else {
+            return
+        }
+        
+        AsyncTask(priority: .low) {
+            Self.didInstantiateDependencySubject.send()
+        }
     }
 #endif
     

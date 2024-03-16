@@ -156,13 +156,11 @@ final class DependencyCycleDetectorTests: XCTestCase {
         expectation.assertForOverFulfill = true
         
         for n in 1...count {
-            Task {
                 let _ = try withFallbackCycleDetection(.name("0")) {
                     return n
                 }
                 
                 expectation.fulfill()
-            }
         }
         
         wait(for: [expectation], timeout: 0.5)
