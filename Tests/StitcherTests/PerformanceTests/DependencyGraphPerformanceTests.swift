@@ -14,6 +14,7 @@ final class DependencyGraphPerformanceTests: XCTestCase {
     
     override func setUp() {
         StitcherConfiguration.isIndexingEnabled = true
+        StitcherConfiguration.runtimeCycleDetectionAvailability = .never
         StitcherConfiguration.approximateDependencyCount = range.upperBound
     }
 
@@ -27,7 +28,7 @@ final class DependencyGraphPerformanceTests: XCTestCase {
             }
         }
         
-        // Baseline: 100_000 @ 0,000137 s
+        // Baseline: 100_000 @ 0,00873 s
         measure {
             DependencyGraph.activate(container)
         }
@@ -47,7 +48,7 @@ final class DependencyGraphPerformanceTests: XCTestCase {
         
         var indexedContainer: IndexedDependencyContainer?
         
-        measure { // Baseline: 100_000 @ 0,369 s
+        measure { // Baseline: 100_000 @ 0,138 s
             let expectation = XCTestExpectation()
             indexedContainer = IndexedDependencyContainer(
                 container: container,
@@ -76,7 +77,7 @@ final class DependencyGraphPerformanceTests: XCTestCase {
         await DependencyGraph.activate(container)
         let num = Int.random(in: range)
         
-        // Baseline: 100_000 @ 0,0000877 s
+        // Baseline: 100_000 @ 0,0000614 s
         measure {
             let _: One = try! DependencyGraph.inject(byName: "D\(num)")
         }

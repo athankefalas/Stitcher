@@ -60,7 +60,6 @@ public enum DependencyGraph {
         )
         
         graphChangedSubject.send()
-        storageCleaner.didInstantiateDependency()
     }
     
     /// Deactivates the given dependency container
@@ -194,13 +193,15 @@ public enum DependencyGraph {
             return existingInstance
         }
         
-        defer {
-            storageCleaner.didInstantiateDependency()
-        }
-        
         do {
-            let instance = try withCycleDetection(registration.locator) {
-                try registration.factory.makeInstance(parameters)
+            let instance: Any
+            
+            if StitcherConfiguration.runtimeCycleDetectionAvailability.isEnabled {
+                instance = try withCycleDetection(registration.locator) {
+                    try registration.factory.makeInstance(parameters)
+                }
+            } else {
+                instance = try registration.factory.makeInstance(parameters)
             }
             
             let instanceStorage = registration.factory.makeInstanceStorage(
@@ -319,9 +320,7 @@ public extension DependencyGraph {
                 container: container,
                 lazyInitializationHandler: initializeLazyDependency(registration:),
                 completion: {
-                    graphChangedSubject.send()
-                    storageCleaner.didInstantiateDependency()
-                    
+                    graphChangedSubject.send()                    
                     continuation.resume()
                 }
             )

@@ -728,6 +728,8 @@ Dependency cycle detected, Type[Root] -> Type[Leaf] -> Type[Root].
 ```
 
 The above error has the root type and all dependency instantiations performed in the same context so the cycle can be easily tracked and corrected.
+Please note that in order to improve injection performance, the runtime dependency cycle detection feature is conditionally enabled only in DEBUG
+builds by default.
 
 ### Interoperabilty
 
@@ -793,8 +795,9 @@ The behaviour of Stitcher can be configured using the properties defined in the 
 | - | - |
 | isIndexingEnabled | Controls whether indexing of dependency containers is active. An unindexed container may have slower performance when looking up dependencies |
 | approximateDependencyCount | An approximate count of the number of defined dependencies used to optimize memory allocations during indexing |
-| autoCleanupFrequency | The frequency with which the instance storage of the dependency graph releases unused or empty storage entries |
+| autoCleanupEnabled | Controls whether the instance storage of the dependency graph will be automatically cleaned when the app is minimized. |
+| runtimeCycleDetectionAvailability | Controls the availability of the runtime dependency cycle detection feature. |
 
 ## 🪲 Issues and Feature Requests
 
-If you have a problem with the library or have a feature request make sure to open an issue.
+If you have a problem with the library, or have a feature request please make sure to open an issue.

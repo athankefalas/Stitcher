@@ -10,41 +10,25 @@ import Foundation
 /// A type that holds any configuration parameters for controlling the behaviour of sticher
 public enum StitcherConfiguration {
     
-    /// A type representing the frequency of automatic storage cleanup.
-    public struct AutoCleanupFrequency: RawRepresentable, ExpressibleByIntegerLiteral {
+    /// The option used to determine if runtime cycle detection is enabled.
+    public enum RuntimeCycleDetectionAvailability {
+        /// Runtime cycle detection will always be enabled.
+        case always
+        /// Runtime cycle detection will never be enabled.
+        case never
         
-        /// An approximate count of discreet dependency injection requests, normalized to once per 0.01 seconds.
-        public let rawValue: Int
-        
-        private init() {
-            self.rawValue = -1
+        var isEnabled: Bool {
+            self == .always
         }
         
-        public init(rawValue: Int) {
-            self.rawValue = rawValue >= 0 ? rawValue : -1
+        /// Runtime cycle detection will be conditionally enabled *only* in debug builds.
+        static var debugOnly: Self {
+#if DEBUG
+            return .always
+#else
+            return .never
+#endif
         }
-        
-        public init(integerLiteral value: Int) {
-            self.init(rawValue: value)
-        }
-        
-        /// The storage will never be automatically cleaned.
-        public static let never = AutoCleanupFrequency()
-        
-        /// The storage will be automatically cleaned **once** per 10 normalized injection requests.
-        public static let veryLow = AutoCleanupFrequency(rawValue: 10)
-        
-        /// The storage will be automatically cleaned **once** per 6 normalized injection requests.
-        public static let low = AutoCleanupFrequency(rawValue: 6)
-        
-        /// The storage will be automatically cleaned **once** per 4 normalized injection requests.
-        public static let medium = AutoCleanupFrequency(rawValue: 4)
-        
-        /// The storage will be automatically cleaned **once** per 2 normalized injection requests.
-        public static let high = AutoCleanupFrequency(rawValue: 2)
-        
-        /// The storage will be automatically cleaned **once** per normalized injection request.
-        public static let veryHigh = AutoCleanupFrequency(rawValue: 1)
     }
     
     struct Snapshot {
@@ -52,16 +36,17 @@ public enum StitcherConfiguration {
         let isIndexingEnabled: Bool
         
         let approximateDependencyCount: Int
-        let autoCleanupFrequency: AutoCleanupFrequency
+        let autoCleanupEnabled: Bool
         
         init() {
             self.indexer = StitcherConfiguration.indexerFactory()
             self.isIndexingEnabled = StitcherConfiguration.isIndexingEnabled
             self.approximateDependencyCount = max(StitcherConfiguration.approximateDependencyCount, 100)
-            self.autoCleanupFrequency = StitcherConfiguration.autoCleanupFrequency
+            self.autoCleanupEnabled = StitcherConfiguration.autoCleanupEnabled
         }
     }
     
+    /// A factory function used to create the indexing provider.
     @Atomic public static var indexerFactory: () -> Indexing = { DefaultIndexer() }
     
     /// Controls whether indexing dependencies is enabled.
@@ -127,5 +112,14 @@ public enum StitcherConfiguration {
     @Atomic public static var approximateDependencyCount = 30_000
     
     /// Controls the frequency at which the dependency graph instance storage will be automatically cleaned up.
-    @Atomic public static var autoCleanupFrequency = AutoCleanupFrequency.veryLow
+    @available(*, unavailable, renamed: "autoCleanupEnabled", message: "")
+    @Atomic public static var autoCleanupFrequency = 0
+    
+    /// Controls whether automatic cleanup of the `DependencyGraph` instance storage is enabled.
+    @Atomic public static var autoCleanupEnabled = true
+    
+    /// Controls the availability of the runtime depedency cycle detection feature.
+    ///
+    /// - Note: By default, the feature is enabled on debug builds in order to increase the performance of injecting dependencies.
+    @Atomic public static var runtimeCycleDetectionAvailability = RuntimeCycleDetectionAvailability.debugOnly
 }

@@ -11,7 +11,7 @@ struct DefaultIndexer: Indexing {
     
     private let parallelProcessingDependencyThreshold: UInt
     
-    public init(parallelProcessingDependencyThreshold: UInt = 3_000) {
+    public init(parallelProcessingDependencyThreshold: UInt = 1_000) {
         self.parallelProcessingDependencyThreshold = parallelProcessingDependencyThreshold
     }
     

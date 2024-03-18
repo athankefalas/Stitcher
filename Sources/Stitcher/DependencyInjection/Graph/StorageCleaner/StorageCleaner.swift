@@ -19,13 +19,6 @@ import Combine
 
 class StorageCleaner {
     
-#if DEBUG
-    @Atomic
-    static var cleanupRequestsCount = 0
-#endif
-    
-    private static let didInstantiateDependencySubject = PipelineSubject<Void>()
-    
     private var cleanupHandler: @Sendable () -> Void
     private var subscriptions = Set<AnyPipelineCancellable>()
     
@@ -69,56 +62,16 @@ class StorageCleaner {
                 .store(in: &subscriptions)
         }
 #endif
-        
-        let autoCleanupFrequency = StitcherConfiguration.autoCleanupFrequency
-        
-        guard autoCleanupFrequency != .never else {
-            return
-        }
-        
-        Self.didInstantiateDependencySubject
-            .debounce(for: 0.01, schedulerQos: .utility)
-            .collect(autoCleanupFrequency.rawValue)
-            .sink { [weak self] _ in
-                self?.cleanupStorage(priority: .low)
-            }
-            .store(in: &subscriptions)
     }
     
     private func cleanupStorage(priority: AsyncTask.Priority = .low) {
-#if DEBUG
-        Self.cleanupRequestsCount += 1
-#endif
+        
+        guard StitcherConfiguration.autoCleanupEnabled else {
+            return
+        }
         
         AsyncTask(priority: priority) {
             self.cleanupHandler()
         }
     }
-    
-    @inlinable func didInstantiateDependency() {
-        let autoCleanupFrequency = StitcherConfiguration.autoCleanupFrequency
-        
-        guard autoCleanupFrequency != .never else {
-            return
-        }
-        
-        AsyncTask(priority: .low) {
-            Self.didInstantiateDependencySubject.send()
-        }
-    }
-    
-#if DEBUG
-    @inlinable static func didInstantiateDependency() {
-        let autoCleanupFrequency = StitcherConfiguration.autoCleanupFrequency
-        
-        guard autoCleanupFrequency != .never else {
-            return
-        }
-        
-        AsyncTask(priority: .low) {
-            Self.didInstantiateDependencySubject.send()
-        }
-    }
-#endif
-    
 }
