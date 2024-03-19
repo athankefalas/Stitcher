@@ -8,8 +8,10 @@
 import Foundation
 import OpenCombine
 
+/// A receipt for a managed scope invalidation observation.
 public protocol ManagedDependencyScopeReceipt {
     
+    /// Cancels the registered observer immediately.
     func cancel()
 }
 

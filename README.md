@@ -3,6 +3,7 @@
 Stitcher is a dependecy injection library for Swift projects.
 
 Contents:
+- [Stitcher](#stitcher)
   - [✔️ Minimum Requirements](#️-minimum-requirements)
   - [⏱ Version History](#-version-history)
   - [🧰 Features](#-features)
@@ -17,6 +18,7 @@ Contents:
         - [Register Dependencies By Type](#register-dependencies-by-type)
         - [Register Dependencies By Associated Value](#register-dependencies-by-associated-value)
         - [Dependency Scope](#dependency-scope)
+          - [Managed Dependency Scopes](#managed-dependency-scopes)
         - [Dependency Eagerness](#dependency-eagerness)
         - [Dependency Groups](#dependency-groups)
         - [Other Registration Representations](#other-registration-representations)
@@ -44,7 +46,7 @@ Stitcher requires at least **Swift version 5.9**.
 Stitcher depends on `Foundation` and `Dispatch` so it is available in every platform that they are available, including non Apple platforms such as
 linux and windows. Please note, that WebAssembly is not currently supported.
 
-Any publicly exposed APIs that reference publishers use `Combine` in the platforms where it is available, or `OpenCombine` in other platforms.
+Any publicly exposed APIs that reference publishers use `Combine` in the platforms where it is available, or [OpenCombine](https://github.com/OpenCombine/OpenCombine/tree/master) in other platforms.
 
 ## ⏱ Version History
 
@@ -52,7 +54,7 @@ Any publicly exposed APIs that reference publishers use `Combine` in the platfor
 |---------|-----------------------------------------------------------------|
 | 0.9.1   | Pre-release.                                                    |
 | 1.0.0   | Initial release.                                                |
-| 1.1.0   | Performance improvements and more relaxed minimum requirements. |
+| 1.1.0   | Performance and stability improvements, macro support, relaxed minimum requirements. |
 
 ## 🧰 Features
 
@@ -61,7 +63,7 @@ Any publicly exposed APIs that reference publishers use `Combine` in the platfor
 - Composable dependency management support for modular projects.
 - Supports for injection by name, by type and by associated values.
 - Type safe initialization parameters for dependency initialization.
-- Support for indexing dependencies in order to minimize injection time.
+- Support for indexing dependencies in order to minimize injection time even with large number of dependencies.
 - Dynamic cyclic dependency detection at runtime.
 
 ## 📦 Installation
