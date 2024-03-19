@@ -19,9 +19,9 @@ class ManagedSingletonInstanceStorage<Value: AnyObject>: InstanceStorage {
         _value_getter(_storedValue)
     }
     
-    private var subscription: ManagedScopeReceipt?
+    private var subscription: ManagedDependencyScopeReceipt?
     
-    init(key: Key, value: Value, tracking scope: ManagedScopeProviding) {
+    init(key: Key, value: Value, tracking scope: ManagedDependencyScopeProviding) {
         self.key = key
         self._storedValue = value
         self._value_getter = { $0 }
@@ -32,7 +32,7 @@ class ManagedSingletonInstanceStorage<Value: AnyObject>: InstanceStorage {
     }
     
     @_disfavoredOverload
-    init<V>(key: Key, value: V, tracking scope: ManagedScopeProviding) where Value == Wrapper<V> {
+    init<V>(key: Key, value: V, tracking scope: ManagedDependencyScopeProviding) where Value == Wrapper<V> {
         self.key = key
         self._storedValue = Wrapper(wrappedValue: value)
         self._value_getter = { $0?.wrappedValue }

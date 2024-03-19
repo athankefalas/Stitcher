@@ -273,6 +273,8 @@ public extension DependencyContainer {
     
 #endif
     
+#if canImport(OpenCombine)
+    
     /// Modifies this container so that it dependency registrations provider closure will be invalidated when the given publisher fires.
     /// - Parameter publisher: A publisher that notifies this dependency container that it's dependency registrations have been invalidated.
     /// - Returns: This dependency container instance with an added invalidation observation.
@@ -297,4 +299,6 @@ public extension DependencyContainer {
             tracking: object.objectWillChange
         )
     }
+    
+#endif
 }

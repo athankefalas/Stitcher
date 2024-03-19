@@ -39,16 +39,20 @@ Contents:
 
 ## ✔️ Minimum Requirements
 
-Stitcher requires at least **iOS 13, macOS 10.15, tvOS 13** or **watchOS 6** and **Swift version 5.9**.
+Stitcher requires at least **Swift version 5.9**.
 
-The minimum OS versions may be dropped in a future release as the main dependency from these versions is `Combine`.
+Stitcher depends on `Foundation` and `Dispatch` so it is available in every platform that they are available, including non Apple platforms such as
+linux and windows. Please note, that WebAssembly is not currently supported.
+
+Any publicly exposed APIs that reference publishers use `Combine` in the platforms where it is available, or `OpenCombine` in other platforms.
 
 ## ⏱ Version History
 
-| Version | Changes                           |
-|---------|-----------------------------------|
-| 0.9.1   | Pre-release.                      |
-| 1.0.0   | Initial release.                  |
+| Version | Changes                                                         |
+|---------|-----------------------------------------------------------------|
+| 0.9.1   | Pre-release.                                                    |
+| 1.0.0   | Initial release.                                                |
+| 1.1.0   | Performance improvements and more relaxed minimum requirements. |
 
 ## 🧰 Features
 
@@ -363,7 +367,7 @@ The following four scopes are available:
 | Instance    | A different instance will be used every time is it injected. |
 | Shared      | The same instance of the dependency will be used every time is it injected, as long as there are strong references to it. |
 | Singleton   | The same instance of the dependency will be used every time is it injected. |
-| Managed     | The same instance of the dependency will be used every time is it injected, until the given publisher fires. |
+| Managed     | The same instance of the dependency will be used every time is it injected, until the given scope is manually invalidated. |
 
 By default, the scope of a dependency is automatically resolved, based on whether the type of the dependency is a value type or a reference
 type. The scope automatically selected for value types is `.instance`, while for reference types `.shared` is used. Furthermore, as value types
@@ -393,6 +397,66 @@ Dependency {
 }
 .scope(.managed(by: principalChangedPublisher))
 
+```
+
+###### Managed Dependency Scopes
+
+A managed dependency scope can be any class that conforms to the `ManagedDependencyScopeProviding` protocol. This protocol has a single requirement
+expressed as a function called `onScopeInvalidated`, that allows the custom type to register a callback that should be called by the scope when it is
+invalidated. This function returns a receipt type that conforms to the `ManagedDependencyScopeReceipt` protocol and can be used to cancel the
+observation. Additionally, Stitcher supports using a publisher directly as a managed scope, which will invalidate the scope of a dependency when the
+given publisher fires.
+
+```swift
+class PrincipalDatasource: ManagedDependencyScopeProviding {
+    
+    class Observation: ManagedDependencyScopeReceipt {
+        typealias Handler = () -> Void
+        
+        private(set) var callback: Handler?
+        
+        var isCancelled: Bool {
+            callback == nil
+        }
+        
+        init(callback: @escaping Handler) {
+            self.callback = callback
+        }
+        
+        func cancel() {
+            callback = nil
+        }
+    }
+    
+    private var observations: [Observation]
+    
+    var principal: UserAccount? {
+        didSet {
+            guard oldValue?.id != principal?.id else {
+                return
+            }
+            
+            principalChanged()
+        }
+    }
+    
+    init(principal: UserAccount?) {
+        self.principal = principal
+        self.observations = []
+    }
+    
+    private func principalChanged() {
+        observations.removeAll(where: { $0.isCancelled })
+        observations.forEach({ $0.callback?() })
+    }
+    
+    func onScopeInvalidated(perform action: @escaping () -> Void) -> any ManagedDependencyScopeReceipt {
+        let observation = Observation(callback: action)
+        observations.append(observation)
+        
+        return observation
+    }
+}
 ```
 
 ##### Dependency Eagerness

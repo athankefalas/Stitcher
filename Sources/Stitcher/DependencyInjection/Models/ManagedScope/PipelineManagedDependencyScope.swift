@@ -1,5 +1,5 @@
 //
-//  PipelineManagedScope.swift
+//  PipelineManagedDependencyScope.swift
 //
 //
 //  Created by Αθανάσιος Κεφαλάς on 12/3/24.
@@ -7,7 +7,7 @@
 
 import Foundation
 
-class PipelineManagedScope: ManagedScopeProviding {
+class PipelineManagedDependencyScope: ManagedDependencyScopeProviding {
     
     private let pipeline: AnyPipeline<Void>
     
@@ -15,7 +15,7 @@ class PipelineManagedScope: ManagedScopeProviding {
         self.pipeline = pipeline
     }
     
-    func onScopeInvalidated(perform action: @escaping () -> Void) -> ManagedScopeReceipt {
+    func onScopeInvalidated(perform action: @escaping () -> Void) -> ManagedDependencyScopeReceipt {
         return pipeline.sink(receiveValue: action)
     }
 }

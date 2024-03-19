@@ -19,8 +19,8 @@ public enum DependencyScope: Hashable {
     /// A singleton instance of the dependency will be created, and used throughout the lifetime of the application.
     case singleton
     
-    /// A singleton instance of the dependency will be created, and used until the given publisher fires.
-    case managed(ManagedScopeProviding)
+    /// A singleton instance of the dependency will be created, and used until the given managed scope representation is invalidated.
+    case managed(ManagedDependencyScopeProviding)
     
     private var caseIdentifier: Int {
         switch self {
@@ -35,7 +35,7 @@ public enum DependencyScope: Hashable {
         }
     }
     
-    var managedScope: ManagedScopeProviding? {
+    var managedScope: ManagedDependencyScopeProviding? {
         switch self {
         case .managed(let scope):
             return scope
@@ -75,25 +75,31 @@ public extension DependencyScope {
     ) -> Self
     where P.Failure == Never {
         return .managed(
-            PipelineManagedScope(
+            PipelineManagedDependencyScope(
                 pipeline: publisher
                     .map({_ in () })
                     .erasedToAnyPipeline()
             )
         )
     }
+
 #endif
+
+#if canImport(OpenCombine)
     
     static func managed<P: OpenCombine.Publisher>(
         by publisher: P
     ) -> Self
     where P.Failure == Never {
         return .managed(
-            PipelineManagedScope(
+            PipelineManagedDependencyScope(
                 pipeline: publisher
                     .map({_ in () })
                     .erasedToAnyPipeline()
             )
         )
     }
+    
+    
+#endif
 }
