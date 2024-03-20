@@ -64,15 +64,17 @@ final class IndexedDependencyContainer {
     private func initializeEagerDependenciesWithoutIndexing(completion: @escaping () -> Void) {
         let registrar = container.registrar
         
-        for registration in registrar {
-            guard registration.canInstantiateEagerly else {
-                continue
+        indexingTask = AsyncTask(priority: .high) {
+            for registration in registrar {
+                guard registration.canInstantiateEagerly else {
+                    continue
+                }
+                
+                self.lazyInitializationHandler(registration)
             }
             
-            self.lazyInitializationHandler(registration)
+            completion()
         }
-        
-        completion()
     }
     
     private func observeContainerChanges() {

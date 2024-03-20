@@ -582,7 +582,7 @@ let container = DependencyContainer(merging: containers)
 
 ```
 
-Please note that the merged containers are strongly retained by the composite dependency cotnainer in order to correctly propagate observations.
+Please note that the merged containers are strongly retained by the composite dependency container in order to correctly propagate observations.
 
 ### Dependency Graph
 
@@ -602,7 +602,7 @@ multiple small containers that are activated independently of each other.
 #### Automatic Injection
 
 Automatic injection is performed by using the `@Injected` property wrapper. When using this property wrapper the dependency is injected lazily at the
-time when it was first requested which can be helpful for defining cyclic relationships between dependencies.
+time when it is first requested which can be helpful for defining cyclic relationships between dependencies.
 
 The injected property wrapper will attempt to inject the dependency, the first time it's wrapped value is requested. If the dependency cannot be found
 or it has a mismatching type it will cause a runtime precondition failure, which will print the file and line of the wrapped property that was
@@ -649,7 +649,7 @@ var repository: Repository
 ##### Inject By Type
 
 The default way to register and inject dependencies is by their type, or a supertype related by a protocol conformance or by inheritance.
-Other that using the dependency type directly a few common types are also supported:
+Other that using the dependency type directly, a few common types are also supported:
 
 1. Optional
    Injects a dependency that matches the `Wrapped` type, or nil if no such dependency is found.
