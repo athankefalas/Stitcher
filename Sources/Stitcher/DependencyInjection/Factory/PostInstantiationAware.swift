@@ -13,3 +13,15 @@ public protocol PostInstantiationAware {
     func didInstantiate()
 }
 
+struct AnyPostInstantiationAware: PostInstantiationAware {
+    
+    private let _didInstantiate: () -> Void
+    
+    init<Instance: PostInstantiationAware>(_ instance: Instance) {
+        self._didInstantiate = { instance.didInstantiate() }
+    }
+    
+    func didInstantiate() {
+        _didInstantiate()
+    }
+}

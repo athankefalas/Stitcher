@@ -48,8 +48,16 @@ import Observation
 ///
 public final class DependencyContainer: Identifiable, Equatable {
     
+    public struct ID: Hashable {
+        private let rawValue: UUID
+        
+        init() {
+            self.rawValue = UUID()
+        }
+    }
+    
     struct ChangeSet {
-        let containerId: AnyHashable
+        let containerId: DependencyContainer.ID
         let oldValue: DependenciesRegistrar
         let newValue: DependenciesRegistrar
         
@@ -58,7 +66,7 @@ public final class DependencyContainer: Identifiable, Equatable {
         let updatedDependencies: DependenciesRegistrar
         
         init(
-            containerId: AnyHashable,
+            containerId: DependencyContainer.ID,
             oldValue: DependenciesRegistrar,
             newValue: DependenciesRegistrar
         ) {
@@ -81,9 +89,7 @@ public final class DependencyContainer: Identifiable, Equatable {
     private var subscriptions: Set<AnyPipelineCancellable> = []
     
     /// The identity of this dependency container instance.
-    public var id: AnyHashable {
-        ObjectIdentifier(self)
-    }
+    public let id = ID()
     
     var registrar: DependenciesRegistrar {
         return dependenciesRegistrar

@@ -50,11 +50,11 @@ Any publicly exposed APIs that reference publishers use `Combine` in the platfor
 
 ## ⏱ Version History
 
-| Version | Changes                                                         |
-|---------|-----------------------------------------------------------------|
-| 0.9.1   | Pre-release.                                                    |
-| 1.0.0   | Initial release.                                                |
-| 1.1.0   | Performance and stability improvements, macro support, relaxed minimum requirements. |
+| Version | Changes                                                               |
+|---------|-----------------------------------------------------------------------|
+| 0.9.1   | Pre-release.                                                          |
+| 1.0.0   | Initial release.                                                      |
+| 1.1.0   | Performance and stability improvements, relaxed minimum requirements. |
 
 ## 🧰 Features
 

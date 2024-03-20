@@ -48,8 +48,10 @@ public struct DependencyFactory: Hashable {
     ) throws -> Any {
         let instance = try instanceFactory(parameters)
         
-        if let postInstantiationAwareInstance = instance as? PostInstantiationAware {
-            postInstantiationAwareInstance.didInstantiate()
+        if let typedInstance = instance as? PostInstantiationAware {
+            DependencyGraph.instantionNotificationCenter.enqueueNotification(
+                to: typedInstance
+            )
         }
         
         return instance

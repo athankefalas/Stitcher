@@ -9,7 +9,7 @@ import Foundation
 import OrderedCollections
 
 /// A wrapper that holds a `DependencyContainer` and indexes it's registrar asynchronously
-class IndexedDependencyContainer {
+final class IndexedDependencyContainer {
     
     @Atomic
     private(set) var indexingTask: CancellableTask?
@@ -37,11 +37,8 @@ class IndexedDependencyContainer {
         
         self.container = container
         self.configuration = configuration
-        self.registrationIndex = configuration.isIndexingEnabled ? DependencyRegistrarIndex(
-            minimumCapacity: max(configuration.approximateDependencyCount, container.registrar.count)
-        ) : [:]
-        
         self.lazyInitializationHandler = lazyInitializationHandler
+        self.registrationIndex = [:]
         
         postInit(completion: completion)
     }
@@ -56,8 +53,12 @@ class IndexedDependencyContainer {
             return initializeEagerDependenciesWithoutIndexing(completion: completion)
         }
         
-        self.observeContainerChanges()
-        self.startIndexing(completion: completion)
+        let indexCapacity = max(configuration.approximateDependencyCount, container.registrar.count)
+        observeContainerChanges()
+        startIndexing(
+            registrationIndexFactory: { DependencyRegistrarIndex(minimumCapacity: indexCapacity) },
+            completion: completion
+        )
     }
     
     private func initializeEagerDependenciesWithoutIndexing(completion: @escaping () -> Void) {
@@ -84,11 +85,12 @@ class IndexedDependencyContainer {
             .store(in: &subscriptions)
     }
     
-    private func startIndexing(completion: @escaping () -> Void = {}) {
-        registrationIndex.removeAll(keepingCapacity: true)
-        let emptyRegistrationIndex = registrationIndex
+    private func startIndexing(
+        registrationIndexFactory: @escaping () -> DependencyRegistrarIndex,
+        completion: @escaping () -> Void = {}
+    ) {
         let coordinator = IndexingCoordinator {
-            emptyRegistrationIndex
+            registrationIndexFactory()
         } didIndexDependency: { [weak self] registration in
             guard registration.canInstantiateEagerly else {
                 return
@@ -113,8 +115,11 @@ class IndexedDependencyContainer {
         
         guard shouldAttemptIncrementalReindexing else {
             cancelIndexing()
-            startIndexing()
-            return
+            registrationIndex.removeAll(keepingCapacity: true)
+            let emptyRegistrationIndex = registrationIndex
+            return startIndexing {
+                emptyRegistrationIndex
+            }
         }
         
         indexingTask = AsyncTask(priority: .high) { [weak self] in
@@ -173,7 +178,7 @@ class IndexedDependencyContainer {
     }
     
     /// Cancels any pending indexing operations and prepares the container for deactivation
-    @inlinable func deactivate() {
+    @inlinable final func deactivate() {
         cancelIndexing()
         subscriptions.forEach({ $0.cancel() })
         subscriptions.removeAll()
@@ -187,7 +192,7 @@ class IndexedDependencyContainer {
     ///  yet, the complexity is *O(n)*, where n is the size of the container registrar.
     /// - Parameter proposal: The proposed locator to match.
     /// - Returns: A set of matching dependency registrations.
-    @inlinable func dependecyRegistrations(
+    @inlinable final func dependecyRegistrations(
         matching proposal: DependencyLocator.MatchProposal
     ) -> OrderedSet<RawDependencyRegistration> {
         

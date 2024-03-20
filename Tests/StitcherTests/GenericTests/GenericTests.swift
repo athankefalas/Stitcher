@@ -10,6 +10,23 @@ import XCTest
 
 final class GenericTests: XCTestCase {
     
+    struct Component: PostInstantiationAware {
+        
+        private var _isActive: Reference<Bool>
+        
+        var isActive: Bool {
+            _isActive.wrappedValue
+        }
+        
+        init(isActive: Bool = false) {
+            self._isActive = Reference(wrappedValue: isActive)
+        }
+        
+        func didInstantiate() {
+            _isActive.wrappedValue = true
+        }
+    }
+    
     class Service: PostInstantiationAware {
         private(set) var isActive: Bool
         
@@ -24,6 +41,8 @@ final class GenericTests: XCTestCase {
     
     let container = DependencyContainer {
         Service()
+        
+        Component()
     }
     
     override func setUpWithError() throws {
@@ -34,16 +53,21 @@ final class GenericTests: XCTestCase {
         DependencyGraph.deactivate(container)
     }
     
-    func test_postInstantiationAware_isCalled() throws {
-        @Injected var service: Service
+    func test_postInstantiationAware_isCalled() async throws {
+        let service: Service = try DependencyGraph.inject()
+        let component: Component = try DependencyGraph.inject()
+        
+        await delay(0.02)
+        
         XCTAssert(service.isActive)
+        XCTAssert(component.isActive)
     }
     
     func delay(_ delayInterval: TimeInterval) async {
-        await withCheckedContinuation { continuation in
-            DispatchQueue.main.asyncAfter(deadline: .now() + delayInterval) {
-                continuation.resume()
-            }
-        }
+        do {
+            let nanosecondsPerSecond = TimeInterval(1_000_000_000)
+            let nanosecondsDelayInterval = UInt64(delayInterval * nanosecondsPerSecond)
+            try await Task.sleep(nanoseconds: nanosecondsDelayInterval)
+        } catch {}
     }
 }

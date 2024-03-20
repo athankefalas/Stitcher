@@ -42,4 +42,19 @@ public final class Atomic<Value> {
     public init(initialValue value: Value) {
         self.value = value
     }
+    
+    @discardableResult
+    public func lock() -> Value {
+        semaphore.wait()
+        return value
+    }
+    
+    public func unlock() {
+        semaphore.signal()
+    }
+    
+    public func unlock(with value: Value) {
+        self.value = value
+        semaphore.signal()
+    }
 }

@@ -17,13 +17,16 @@ import Combine
 public enum DependencyGraph {
     
     @Atomic
-    private static var activeContainers: OrderedDictionary<AnyHashable, IndexedDependencyContainer> = [:]
+    private static var initialized = false
+    
+    @Atomic
+    private static var activeContainers: OrderedDictionary<DependencyContainer.ID, IndexedDependencyContainer> = [:]
     
     @Atomic
     private static var instanceStorage: [InstanceStorageKey : AnyInstanceStorage] = [:]
     
     @Atomic
-    private static var subscriptions: [AnyHashable : AnyPipelineCancellable] = [:]
+    private static var subscriptions: [DependencyContainer.ID : AnyPipelineCancellable] = [:]
     
     private static let graphChangedSubject = PipelineSubject<Void>()
     
@@ -31,8 +34,23 @@ public enum DependencyGraph {
         graphChangedSubject.erasedToAnyPipeline()
     }
     
+    static let instantionNotificationCenter = InstantionNotificationCenter()
+    
     private static let storageCleaner = StorageCleaner {
         releaseUnusedStorage()
+    }
+    
+    private static func prewarm() {
+        let initialized = _initialized.lock()
+        
+        guard !initialized else {
+            _initialized.unlock()
+            return
+        }
+        
+        _ = instantionNotificationCenter
+        _ = storageCleaner
+        _initialized.unlock(with: true)
     }
     
     // MARK: DependencyContainer Activation - Deactivation
@@ -43,8 +61,15 @@ public enum DependencyGraph {
         _ container: DependencyContainer,
         completion: @escaping () -> Void = {}
     ) {
+        prewarm()
         
         let id = container.id
+        activeContainers[id] = IndexedDependencyContainer(
+            container: container,
+            lazyInitializationHandler: initializeLazyDependency(registration:),
+            completion: completion
+        )
+        
         subscriptions[id] = container.dependenciesRegistrarChangesPublisher
             .sink { changes in
                 dependencyContainer(
@@ -52,12 +77,6 @@ public enum DependencyGraph {
                     changedWith: changes
                 )
             }
-        
-        activeContainers[id] = IndexedDependencyContainer(
-            container: container,
-            lazyInitializationHandler: initializeLazyDependency(registration:),
-            completion: completion
-        )
         
         graphChangedSubject.send()
     }

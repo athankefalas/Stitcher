@@ -26,6 +26,7 @@ extension Pipeline {
     public func collect(
         _ count: Int
     ) -> AnyPipeline<Array<Output>> {
+        
 #if canImport(Combine)
         
         if #available(iOS 13.0, macOS 10.15, macCatalyst 13.0, tvOS 13.0, watchOS 6.0, visionOS 1.0, *),
@@ -54,7 +55,6 @@ extension Pipeline {
         for dueTime: TimeInterval,
         schedulerQos: DispatchQoS
     ) -> AnyPipeline<Output> {
-        
         
 #if canImport(Combine)
         
@@ -93,7 +93,6 @@ extension Pipeline {
     func sink(
         receiveValue: @escaping (Output) -> Void
     ) -> AnyPipelineCancellable {
-        
         
 #if canImport(Combine)
         

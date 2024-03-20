@@ -10,7 +10,7 @@ import OrderedCollections
 
 public struct ParallelIndexer: Indexing {
     
-    static var parallerTaskCount: Int {
+    static var parallelTaskCount: Int {
         let coreCount = Double(ProcessInfo().processorCount)
         let maximumSystemLoadFactor = 0.75
         return Int(floor(coreCount * maximumSystemLoadFactor))
@@ -24,7 +24,7 @@ public struct ParallelIndexer: Indexing {
         completion: @escaping (DependencyRegistrarIndex) -> Void
     ) -> any CancellableTask {
         
-        let parallelTaskCount = Self.parallerTaskCount
+        let parallelTaskCount = Self.parallelTaskCount
         
         if parallelTaskCount < 2 {
             return taskIndexing(
@@ -37,8 +37,8 @@ public struct ParallelIndexer: Indexing {
         let semaphore = DispatchSemaphore(value: 1)
         let indexingTask = IndexingTask()
         let dependencies = Array(dependencies)
-        let taskCounterReference = Wrapper(wrappedValue: 0)
-        let indexReference = Wrapper(wrappedValue: coordinator.emptyIndex())
+        let taskCounterReference = Reference(wrappedValue: 0)
+        let indexReference = Reference(wrappedValue: coordinator.emptyIndex())
         
         let handleSubtaskCompletion: (Int, DependencyRegistrarIndex) -> Void = { taskIndex, indexedRegistrar in
             semaphore.wait()
@@ -84,35 +84,5 @@ public struct ParallelIndexer: Indexing {
         }
         
         return indexingTask
-    }
-    
-    private func taskIndexing<S: Sequence>(
-        dependencies: S,
-        coordinator: IndexingCoordinator,
-        completion: @escaping (DependencyRegistrarIndex) -> Void
-    ) -> AsyncTask
-    where S.Element == RawDependencyRegistration {
-        
-        AsyncTask(priority: .high) {
-            var dependencyRegistrarIndex = coordinator.emptyIndex()
-            
-            for registration in dependencies {
-                
-                guard !AsyncTask.isCancelled else {
-                    return
-                }
-                
-                for key in registration.indexingKeys {
-                    var values = dependencyRegistrarIndex[key] ?? OrderedSet()
-                    values.append(registration)
-                    
-                    dependencyRegistrarIndex[key] = values
-                }
-                
-                coordinator.didIndex(dependency: registration)
-            }
-            
-            completion(dependencyRegistrarIndex)
-        }
     }
 }

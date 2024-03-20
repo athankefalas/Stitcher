@@ -25,9 +25,9 @@ class SingletonInstanceStorage<Value: AnyObject>: InstanceStorage {
     }
     
     @_disfavoredOverload
-    init<V>(key: Key, value: V) where Value == Wrapper<V> {
+    init<V>(key: Key, value: V) where Value == Reference<V> {
         self.key = key
-        self._storedValue = Wrapper(wrappedValue: value)
+        self._storedValue = Reference(wrappedValue: value)
         self._value_getter = { $0.wrappedValue }
     }
     

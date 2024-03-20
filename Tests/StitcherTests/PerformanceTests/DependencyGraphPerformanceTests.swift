@@ -64,7 +64,28 @@ final class DependencyGraphPerformanceTests: XCTestCase {
         indexedContainer?.deactivate()
     }
     
-    func test_dependencyGraph_lookup() async throws {
+    func test_dependencyGraph_unindexedInjection() throws {
+        let container = DependencyContainer {
+            RepeatDependency(for: self.range) { num in
+                Dependency {
+                    One()
+                }
+                .named("D\(num)")
+            }
+        }
+        
+        DependencyGraph.activate(container)
+        let num = Int.random(in: range)
+        
+        // Baseline: 100_000 @ 0,000172 s
+        measure {
+            let _: One = try! DependencyGraph.inject(byName: "D\(num)")
+        }
+        
+        DependencyGraph.deactivate(container)
+    }
+    
+    func test_dependencyGraph_indexedInjection() async throws {
         let container = DependencyContainer {
             RepeatDependency(for: self.range) { num in
                 Dependency {
@@ -77,7 +98,7 @@ final class DependencyGraphPerformanceTests: XCTestCase {
         await DependencyGraph.activate(container)
         let num = Int.random(in: range)
         
-        // Baseline: 100_000 @ 0,0000614 s
+        // Baseline: 100_000 @ 0,0000684 s
         measure {
             let _: One = try! DependencyGraph.inject(byName: "D\(num)")
         }

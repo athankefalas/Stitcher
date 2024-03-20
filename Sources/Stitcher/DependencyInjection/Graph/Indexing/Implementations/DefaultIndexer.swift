@@ -25,7 +25,7 @@ struct DefaultIndexer: Indexing {
         let plainIndexer = PlainIndexer()
         let parallelIndexer = ParallelIndexer()
         
-        if ParallelIndexer.parallerTaskCount < 2 || dependencies.count < parallelProcessingDependencyThreshold {
+        if ParallelIndexer.parallelTaskCount < 2 || dependencies.count < parallelProcessingDependencyThreshold {
             return plainIndexer.index(
                 dependencies: dependencies,
                 coordinator: coordinator,
