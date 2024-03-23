@@ -28,4 +28,4 @@
 //  Created by Athanasios Kefalas on 22/12/21.
 //
 
-/// Stitcher Version: 1.0
+/// Stitcher Version: 1.1.0
