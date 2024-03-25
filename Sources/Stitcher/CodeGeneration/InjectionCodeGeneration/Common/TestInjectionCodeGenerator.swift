@@ -13,6 +13,6 @@ struct TestInjectionCodeGenerator: InjectionCodeGenerator {
         parameterName: String?,
         parameterTypeName: String
     ) -> String {
-        "Generated_\(parameterTypeName)"
+        "GENERATED_\(parameterTypeName)"
     }
 }
