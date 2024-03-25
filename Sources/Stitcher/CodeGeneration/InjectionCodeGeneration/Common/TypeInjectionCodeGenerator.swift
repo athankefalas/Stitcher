@@ -11,10 +11,10 @@ struct TypeInjectionCodeGenerator: InjectionCodeGenerator {
     
     init() {}
     
-    func generateInjectionCode(
+    func generateInjectionExpression(
         parameterName: String?,
-        parameterType: String
+        parameterTypeName: String
     ) -> String {
-        return "try! DependencyGraph.inject(byType: \(parameterType).self)"
+        return "try! DependencyGraph.inject(byType: \(parameterTypeName).self)"
     }
 }

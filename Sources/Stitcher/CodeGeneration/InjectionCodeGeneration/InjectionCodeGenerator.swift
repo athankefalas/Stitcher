@@ -9,8 +9,8 @@ import Foundation
 
 public protocol InjectionCodeGenerator {
     
-    func generateInjectionCode(
+    func generateInjectionExpression(
         parameterName: String?,
-        parameterType: String
+        parameterTypeName: String
     ) -> String
 }

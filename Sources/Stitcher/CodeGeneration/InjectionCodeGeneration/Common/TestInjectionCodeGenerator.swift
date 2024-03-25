@@ -9,10 +9,10 @@ import Foundation
 
 struct TestInjectionCodeGenerator: InjectionCodeGenerator {
     
-    func generateInjectionCode(
+    func generateInjectionExpression(
         parameterName: String?,
-        parameterType: String
+        parameterTypeName: String
     ) -> String {
-        "Generated_\(parameterType)"
+        "Generated_\(parameterTypeName)"
     }
 }

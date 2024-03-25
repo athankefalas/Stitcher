@@ -33,6 +33,10 @@ public enum InjectionCodeGenerators {
         .stitcherByName : NameInjectionCodeGenerator()
     ]
     
+    public static var defaultGenerator: any InjectionCodeGenerator {
+        generator(named: .stitcherByType)
+    }
+    
     public static func generator(named name: Name) -> any InjectionCodeGenerator {
         guard let generator = generators[name] else {
             fatalError("Unknown injection code generator name.")

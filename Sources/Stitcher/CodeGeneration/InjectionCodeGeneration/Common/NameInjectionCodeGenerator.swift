@@ -11,15 +11,15 @@ struct NameInjectionCodeGenerator: InjectionCodeGenerator {
     
     init() {}
     
-    func generateInjectionCode(
+    func generateInjectionExpression(
         parameterName: String?,
-        parameterType: String
+        parameterTypeName: String
     ) -> String {
         
         if let parameterName {
             return "try! DependencyGraph.inject(byName: \(parameterName))"
         }
         
-        return "try! DependencyGraph.inject(byType: \(parameterType).self)"
+        return "try! DependencyGraph.inject(byType: \(parameterTypeName).self)"
     }
 }
