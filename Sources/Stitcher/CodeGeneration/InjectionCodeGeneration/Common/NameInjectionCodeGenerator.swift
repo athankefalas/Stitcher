@@ -1,0 +1,25 @@
+//
+//  NameInjectionCodeGenerator.swift
+//
+//
+//  Created by Αθανάσιος Κεφαλάς on 25/3/24.
+//
+
+import Foundation
+
+struct NameInjectionCodeGenerator: InjectionCodeGenerator {
+    
+    init() {}
+    
+    func generateInjectionCode(
+        parameterName: String?,
+        parameterType: String
+    ) -> String {
+        
+        if let parameterName {
+            return "try! DependencyGraph.inject(byName: \(parameterName))"
+        }
+        
+        return "try! DependencyGraph.inject(byType: \(parameterType).self)"
+    }
+}
