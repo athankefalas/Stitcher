@@ -9,7 +9,7 @@ import Foundation
 
 public enum InjectionCodeGenerators {
     
-    public struct Name: Hashable {
+    public struct Name: Hashable, CaseIterable {
         public let rawValue: String
         
         private init(rawValue: String) {
@@ -19,6 +19,12 @@ public enum InjectionCodeGenerators {
         static let stitcherTest = Name(rawValue: "stitcherTest")
         public static let stitcherByType = Name(rawValue: "stitcherByType")
         public static let stitcherByName = Name(rawValue: "stitcherByName")
+        
+        public static var allCases: [InjectionCodeGenerators.Name] = [
+            .stitcherTest,
+            .stitcherByType,
+            .stitcherByName
+        ]
     }
     
     private static let generators: [Name : any InjectionCodeGenerator] = [
