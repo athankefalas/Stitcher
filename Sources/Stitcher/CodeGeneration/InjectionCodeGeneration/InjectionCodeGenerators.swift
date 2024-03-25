@@ -16,11 +16,13 @@ public enum InjectionCodeGenerators {
             self.rawValue = rawValue
         }
         
-        static let stitcherByType = Name(rawValue: "stitcherByType")
-        static let stitcherByName = Name(rawValue: "stitcherByName")
+        static let stitcherTest = Name(rawValue: "stitcherTest")
+        public static let stitcherByType = Name(rawValue: "stitcherByType")
+        public static let stitcherByName = Name(rawValue: "stitcherByName")
     }
     
     private static let generators: [Name : any InjectionCodeGenerator] = [
+        .stitcherTest : TestInjectionCodeGenerator(),
         .stitcherByType : TypeInjectionCodeGenerator(),
         .stitcherByName : NameInjectionCodeGenerator()
     ]
