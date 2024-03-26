@@ -9,4 +9,5 @@ import Foundation
 
 public protocol AutoregisterableDependency {
     
+    static var dependencyRegistration: AutomaticDependencyRegistration<Self> { get }
 }
