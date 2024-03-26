@@ -7,7 +7,4 @@
 
 import Foundation
 
-public protocol AutoregisterableDependency {
-    
-    static var dependencyRegistration: AutomaticDependencyRegistration<Self> { get }
-}
+public protocol AutoregisterableDependency: RegisterableDependency {}

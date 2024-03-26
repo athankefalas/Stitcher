@@ -1,5 +1,5 @@
 //
-//  AutomaticDependencyRegistration.swift
+//  GeneratedDependencyRegistration.swift
 //
 //
 //  Created by Αθανάσιος Κεφαλάς on 26/3/24.
@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct AutomaticDependencyRegistration<T>: DependencyRepresenting {
+public struct GeneratedDependencyRegistration<T>: DependencyRepresenting {
     
     /// The locator used to query the represented dependency in a dependency container.
     public let locator: DependencyLocator
