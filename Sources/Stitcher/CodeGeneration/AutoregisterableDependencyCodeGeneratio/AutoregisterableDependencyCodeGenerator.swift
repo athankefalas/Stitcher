@@ -15,13 +15,13 @@ public struct AutoregisterableDependencyCodeGenerator {
         case dependencyEagerness = "eagerness"
     }
     
-    init() {}
+    public init() {}
     
-    func orderedArguments() -> [Arguments] {
+    public func orderedArguments() -> [Arguments] {
         return Arguments.allCases
     }
     
-    func generateAutoregistrationContainerExpression(
+    public func generateAutoregistrationContainerExpression(
         typeName: String
     ) -> String {
         return "GeneratedDependencyRegistration<\(typeName)>"
