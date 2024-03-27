@@ -17,7 +17,11 @@ public struct AutoregisterableDependencyCodeGenerator {
     
     public init() {}
     
-    public func orderedArguments() -> [Arguments] {
+    public func autoregistrationContainerPropertyName() -> String {
+        return "dependencyRegistration"
+    }
+    
+    public func autoregistrationContainerOrderedArguments() -> [Arguments] {
         return Arguments.allCases
     }
     
