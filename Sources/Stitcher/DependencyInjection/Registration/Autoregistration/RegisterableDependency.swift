@@ -8,6 +8,7 @@
 import Foundation
 
 public protocol RegisterableDependency {
+    associatedtype SomeDependency
     
-    static var dependencyRegistration: GeneratedDependencyRegistration<Self> { get }
+    static var dependencyRegistration: GeneratedDependencyRegistration<SomeDependency> { get }
 }

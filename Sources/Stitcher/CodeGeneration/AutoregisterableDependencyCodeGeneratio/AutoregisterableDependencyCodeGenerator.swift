@@ -7,9 +7,23 @@
 
 import Foundation
 
-public protocol AutoregisterableDependencyCodeGenerator {
+public struct AutoregisterableDependencyCodeGenerator {
+    
+    public enum Arguments: String, CaseIterable {
+        case dependencyLocator = "locator"
+        case dependencyScope = "scope"
+        case dependencyEagerness = "eagerness"
+    }
+    
+    init() {}
+    
+    func orderedArguments() -> [Arguments] {
+        return Arguments.allCases
+    }
     
     func generateAutoregistrationContainerExpression(
         typeName: String
-    ) -> String
+    ) -> String {
+        return "GeneratedDependencyRegistration<\(typeName)>"
+    }
 }
